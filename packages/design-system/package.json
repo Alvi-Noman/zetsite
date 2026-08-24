@@ -1,0 +1,13 @@
+{
+  "name": "@zetsite/design-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tailwind-preset": "./tailwind-preset.js",
+    "./tokens.css": "./tokens.css"
+  },
+  "dependencies": {
+    "@shopify/polaris-tokens": "^9.4.2"
+  }
+}

@@ -1,0 +1,51 @@
+/**
+ * zetsite design tokens — semantic aliases mapped onto the real Shopify
+ * Polaris design system (@shopify/polaris-tokens). Polaris's own --p-*
+ * variables are the actual source of truth; this file only renames them
+ * into the semantic names our Tailwind preset and components use
+ * (bg-surface, text-ink, bg-accent, ...). Never hardcode a hex value here
+ * — if a color is missing, pull it from Polaris's token set, don't invent one.
+ *
+ * See DESIGN_SYSTEM.md for the full rationale.
+ */
+@import '@shopify/polaris-tokens/css/styles.css';
+
+:root {
+  /* Surfaces */
+  --surface: var(--p-color-bg-surface);
+  --surface-secondary: var(--p-color-bg-surface-secondary);
+  --surface-hover: var(--p-color-bg-surface-hover);
+  --surface-selected: var(--p-color-bg-surface-selected);
+
+  /* Borders */
+  --border: var(--p-color-border);
+  --border-strong: var(--p-color-border-hover);
+
+  /* Text */
+  --ink: var(--p-color-text);
+  --ink-secondary: var(--p-color-text-secondary);
+  --ink-tertiary: var(--p-color-text-disabled);
+
+  /*
+   * Polaris deliberately splits two different "colored" roles — don't
+   * collapse them back into one:
+   *  - accent ("brand"): near-black, used for primary buttons/actions.
+   *    This is what Shopify's own admin "Save" button actually looks like.
+   *  - link ("interactive"): blue, used for text links, focus rings, and
+   *    selected/active states. Never used for button fills.
+   */
+  --accent: var(--p-color-bg-fill-brand);
+  --accent-hover: var(--p-color-bg-fill-brand-hover);
+
+  --link: var(--p-color-text-link);
+  --link-hover: var(--p-color-text-link-hover);
+  --link-subtle: var(--p-color-bg-surface-emphasis);
+
+  /* Semantic */
+  --danger: var(--p-color-bg-fill-critical);
+  --danger-subtle: var(--p-color-bg-surface-critical);
+  --success: var(--p-color-bg-fill-success);
+  --success-subtle: var(--p-color-bg-surface-success);
+  --warning: var(--p-color-bg-fill-warning);
+  --warning-subtle: var(--p-color-bg-surface-warning);
+}

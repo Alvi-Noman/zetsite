@@ -1,0 +1,31 @@
+{
+  on_demand_tls {
+    ask http://auth-service:4002/api/v1/auth/subdomains/allow
+  }
+}
+
+zetsite.com, www.zetsite.com, app.zetsite.com {
+  encode zstd gzip
+  reverse_proxy builder:80
+}
+
+# Every other hostname that reaches here is either a *.zetsite.com tenant
+# subdomain or a merchant's own connected custom domain (e.g. shop.example.com)
+# — both are served the same storefront app, which resolves which store it is
+# from the request's Host header (subdomain directly, custom domain via
+# resolve-domain, see storefrontRoutes.ts). on_demand_tls's `ask` directive
+# above is the actual gate: it only issues a certificate for a subdomain that
+# matches a real store, or a domain a merchant has verified they control (see
+# domainController.ts) — anything else fails the TLS handshake here rather
+# than ever reaching reverse_proxy.
+:80 {
+  redir https://{host}{uri} permanent
+}
+
+:443 {
+  tls {
+    on_demand
+  }
+  encode zstd gzip
+  reverse_proxy storefront:80
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@zetsite/theme-editorial",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/react": "18",
+    "@zetsite/config": "workspace:*",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@zetsite/shared": "workspace:*",
+    "@zetsite/theme-kit": "workspace:*",
+    "lucide-react": "^0.454.0",
+    "react": "18"
+  }
+}

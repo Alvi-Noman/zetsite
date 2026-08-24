@@ -1,0 +1,101 @@
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: "4002"
+      # Compose-internal Mongo container, not the host's MONGODB_URI from .env
+      # (that one's for `pnpm dev` reaching a locally-installed Mongo) — inside
+      # a container "127.0.0.1" means the container itself, so a host address
+      # would never resolve here.
+      MONGODB_URI: mongodb://mongo:27017/zetsite
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-me}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      FRONTEND_URL: ${PUBLIC_APP_URL:-http://localhost:3100}
+      SITE_ROOT_DOMAIN: ${SITE_ROOT_DOMAIN:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100,http://127.0.0.1:3100}
+    working_dir: /app/services/auth-service
+    ports:
+      - "4012:4002"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  api-service:
+    build:
+      context: .
+      dockerfile: services/api-service/Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: "4001"
+      MONGODB_URI: mongodb://mongo:27017/zetsite
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key-change-me}
+      AUTH_SERVICE_URL: http://auth-service:4002
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3100}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100,http://127.0.0.1:3100}
+      # Optional — landing-page AI text enhancement (see nativeLandingPageBuilder.ts /
+      # aiContentEnhancer.ts). Unset means landing pages still generate fully via the
+      # native builder, just without AI-polished copy.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1}
+    working_dir: /app/services/api-service
+    ports:
+      - "4011:4001"
+    volumes:
+      - uploads_data:/app/services/api-service/uploads
+    depends_on:
+      - auth-service
+      - mongo
+    restart: unless-stopped
+
+  builder:
+    build:
+      context: .
+      dockerfile: apps/builder/Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3100:80"
+    depends_on:
+      - api-service
+    restart: unless-stopped
+
+  storefront:
+    build:
+      context: .
+      dockerfile: apps/storefront/Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3200:80"
+    depends_on:
+      - api-service
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - builder
+      - storefront
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  uploads_data:
+  mongo_data:
