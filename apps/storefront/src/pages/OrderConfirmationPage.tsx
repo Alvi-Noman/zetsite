@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchStorefrontOrder, type StorefrontOrderConfirmation, type CheckoutSettings } from '@zetsite/theme-kit';
+import { trackPixelPurchase } from '../lib/metaPixel';
 
 function money(currency: string, value: number): string {
   return `${currency || '৳'}${value.toFixed(2)}`;
@@ -49,6 +50,17 @@ export function OrderConfirmationPage({ storeSlug }: { storeSlug: string }) {
       cancelled = true;
     };
   }, [storeSlug, orderId]);
+
+  // `eventId` = order.id, matching the id sent to Meta's Conversions API by
+  // storefrontRoutes.ts's POST /:slug/orders handler, so both the browser
+  // pixel and the server-side event dedupe into one Purchase conversion
+  // instead of Meta double-counting the sale.
+  const purchaseTracked = useRef(false);
+  useEffect(() => {
+    if (state.status !== 'ready' || purchaseTracked.current) return;
+    purchaseTracked.current = true;
+    trackPixelPurchase(state.order.id, state.order.total, 'BDT');
+  }, [state]);
 
   if (state.status === 'loading') {
     return <div className="px-6 py-20 text-center text-neutral-400">Loading your order…</div>;

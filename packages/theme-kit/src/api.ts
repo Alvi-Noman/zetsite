@@ -181,6 +181,25 @@ export async function fetchStorefrontShippingSettings(storeSlug: string): Promis
   return data?.settings ?? DEFAULT_SHIPPING_SETTINGS;
 }
 
+export interface StorefrontPixelSettings {
+  enabled: boolean;
+  pixelId: string;
+}
+
+const DEFAULT_PIXEL_SETTINGS: StorefrontPixelSettings = { enabled: false, pixelId: '' };
+
+// Store-wide Meta Pixel id, used by App.tsx to inject the base fbq('init')
+// + PageView tag across Home/Product/Collection/order-confirmation pages
+// (landing pages use their own per-page pixel override instead — see
+// LandingPage.tsx). The matching server-side Conversions API access token
+// never appears here — it's read directly from the database by api-service.
+export async function fetchStorefrontPixelSettings(storeSlug: string): Promise<StorefrontPixelSettings> {
+  const data = await get<{ success: boolean; pixel: StorefrontPixelSettings }>(
+    `/api/v1/storefront/${storeSlug}/pixel-settings`,
+  );
+  return data?.pixel ?? DEFAULT_PIXEL_SETTINGS;
+}
+
 export interface StorefrontOrderPayload {
   productId: string;
   variantIndex?: number | null;

@@ -68,6 +68,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: 'Checkout', to: '/settings/checkout' },
       { label: 'Shipping and delivery', to: '/settings/shipping' },
+      { label: 'Facebook Pixel', to: '/settings/facebook-pixel' },
       { label: 'Domains', to: '/settings/domains' },
     ],
   },

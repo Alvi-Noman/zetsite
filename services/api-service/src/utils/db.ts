@@ -62,6 +62,7 @@ export async function connectDb() {
   // 30 days is long enough for a merchant follow-up window without the
   // collection growing forever.
   await db.collection('abandoned_checkouts').createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 });
+  await db.collection('store_pixels').createIndex({ storeId: 1 }, { unique: true });
 }
 
 export function getDb() {

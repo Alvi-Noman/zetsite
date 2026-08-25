@@ -13,6 +13,7 @@ import ThemesPage from '@/pages/storefront/ThemesPage';
 import LandingPagesPage from '@/pages/storefront/LandingPagesPage';
 import CheckoutSettingsPage from '@/pages/settings/CheckoutSettingsPage';
 import ShippingSettingsPage from '@/pages/settings/ShippingSettingsPage';
+import FacebookPixelSettingsPage from '@/pages/settings/FacebookPixelSettingsPage';
 import DomainsPage from '@/pages/settings/DomainsPage';
 import OrdersPage from '@/pages/storefront/OrdersPage';
 import AbandonedCheckoutsPage from '@/pages/storefront/AbandonedCheckoutsPage';
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
           <Route path="/settings/checkout" element={<CheckoutSettingsPage />} />
           <Route path="/settings/shipping" element={<ShippingSettingsPage />} />
+          <Route path="/settings/facebook-pixel" element={<FacebookPixelSettingsPage />} />
           <Route path="/settings/domains" element={<DomainsPage />} />
         </Route>
       </Routes>

@@ -17,6 +17,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import checkoutSettingsRoutes from './routes/checkoutSettingsRoutes.js';
 import shippingSettingsRoutes from './routes/shippingSettingsRoutes.js';
 import abandonedCheckoutRoutes from './routes/abandonedCheckoutRoutes.js';
+import pixelSettingsRoutes from './routes/pixelSettingsRoutes.js';
 
 const app: Express = express();
 
@@ -44,6 +45,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/checkout-settings', checkoutSettingsRoutes);
 app.use('/api/v1/shipping-settings', shippingSettingsRoutes);
 app.use('/api/v1/abandoned-checkouts', abandonedCheckoutRoutes);
+app.use('/api/v1/pixel-settings', pixelSettingsRoutes);
 app.use(
   '/api/uploads',
   express.static(UPLOAD_DIR, {

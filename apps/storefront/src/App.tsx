@@ -1,13 +1,53 @@
-import { useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { fetchStoreSlugByHost } from '@zetsite/theme-kit';
+import { useEffect, useRef, useState } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { fetchStoreSlugByHost, fetchStorefrontPixelSettings } from '@zetsite/theme-kit';
 import { resolveStoreSlug } from './lib/resolveSlug';
+import { initMetaPixel, trackPixelPageView } from './lib/metaPixel';
 import { HomePage } from './pages/HomePage';
 import { ProductPage } from './pages/ProductPage';
 import { CollectionPage } from './pages/CollectionPage';
 import { LandingPage } from './pages/LandingPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { PopupRenderer } from './components/PopupRenderer';
+
+// Store-wide Meta Pixel — Home/Product/Collection/order-confirmation pages
+// only. Landing pages inject their own pixel override directly (see
+// LandingPage.tsx) since a landing page may run a different ad campaign's
+// pixel than the main storefront.
+function useStorePixel(storeSlug: string) {
+  const location = useLocation();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!storeSlug) return;
+    let cancelled = false;
+    fetchStorefrontPixelSettings(storeSlug).then((pixel) => {
+      if (cancelled) return;
+      if (pixel.enabled && pixel.pixelId) {
+        initMetaPixel(pixel.pixelId);
+        setReady(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeSlug]);
+
+  // Skip the render where `ready` first flips true — initMetaPixel already
+  // fired one PageView for the current path, so tracking again here would
+  // double-count the initial view. Only genuine subsequent route changes
+  // (SPA navigations, which don't reload the page/re-init the pixel) should
+  // trigger this effect from then on.
+  const isFirstReadyRender = useRef(true);
+  useEffect(() => {
+    if (!ready) return;
+    if (isFirstReadyRender.current) {
+      isFirstReadyRender.current = false;
+      return;
+    }
+    trackPixelPageView();
+  }, [ready, location.pathname]);
+}
 
 type Resolution = { status: 'ready'; slug: string } | { status: 'resolving' } | { status: 'notfound' };
 
@@ -39,6 +79,7 @@ function useResolvedStoreSlug(): Resolution {
 
 export default function App() {
   const resolution = useResolvedStoreSlug();
+  useStorePixel(resolution.status === 'ready' ? resolution.slug : '');
 
   if (resolution.status === 'resolving') {
     return <div className="min-h-screen flex items-center justify-center text-neutral-400">Loading…</div>;

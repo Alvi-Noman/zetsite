@@ -8,6 +8,8 @@ import type { LandingPageThemeId } from '@zetsite/shared';
 import { LANDING_PAGE_THEME_IDS, DEFAULT_LANDING_PAGE_THEME_ID } from '@zetsite/shared/landingThemes';
 import { getCheckoutSettings } from './checkoutSettingsRoutes.js';
 import { getShippingSettings, type ShippingOption } from './shippingSettingsRoutes.js';
+import { getPixelSettings } from './pixelSettingsRoutes.js';
+import { sendPurchaseCapiEvent } from '../utils/metaCapi.js';
 
 const router: RouterType = Router({ mergeParams: true });
 
@@ -366,6 +368,28 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
     if (cleanIdempotencyKey) {
       await db.collection('abandoned_checkouts').deleteOne({ storeId, key: cleanIdempotencyKey });
     }
+    // Server-side leg of Meta's dual Pixel + CAPI tracking. `event_id` is the
+    // same order id the storefront's OrderConfirmationPage uses for its
+    // client-side fbq('track','Purchase', ..., {eventID}) call, so Meta
+    // deduplicates the two into a single conversion. Fired without awaiting
+    // (and errors are swallowed inside sendPurchaseCapiEvent) so a Meta API
+    // hiccup never delays or fails order placement.
+    getPixelSettings(storeId)
+      .then((pixelSettings) =>
+        sendPurchaseCapiEvent(pixelSettings, req, {
+          eventId: result.insertedId.toString(),
+          // The storefront serves one currency (Taka) across every store —
+          // see checkoutSettingsRoutes.ts's `currency` field, which is a
+          // display symbol ("৳") rather than the ISO 4217 code Meta requires.
+          eventSourceUrl: req.headers.referer ?? `https://${req.hostname}`,
+          value: total,
+          currency: 'BDT',
+          contentIds: [product._id.toString()],
+          numItems: qty,
+          customerPhone: cleanPhone,
+        }),
+      )
+      .catch((err) => console.error('[metaCapi] failed to dispatch Purchase event:', err));
     res.status(201).json({ success: true, orderId: result.insertedId.toString() });
   } catch (err: any) {
     // Duplicate idempotencyKey raced in between the pre-check above and this
@@ -691,6 +715,15 @@ router.get('/:slug/shipping-settings', async (req: StoreScopedRequest, res) => {
   const storeId = new ObjectId(req.store!.id);
   const settings = await getShippingSettings(storeId);
   res.json({ success: true, settings });
+});
+
+// Only the pixel id (public by design — every Meta Pixel id is visible in
+// the page source anyway) is exposed here; capiAccessToken never leaves the
+// server (see pixelSettingsRoutes.ts).
+router.get('/:slug/pixel-settings', async (req: StoreScopedRequest, res) => {
+  const storeId = new ObjectId(req.store!.id);
+  const settings = await getPixelSettings(storeId);
+  res.json({ success: true, pixel: { enabled: settings.enabled, pixelId: settings.pixelId } });
 });
 
 router.get('/:slug/products', async (req: StoreScopedRequest, res) => {
