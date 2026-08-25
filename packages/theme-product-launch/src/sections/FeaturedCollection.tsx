@@ -155,7 +155,7 @@ function ProductCard({
       </div>
       <p className="mt-3 text-sm font-semibold text-neutral-900">{product.title}</p>
       {product.price != null ? (
-        <p className="text-sm text-neutral-500">${Number(product.price).toFixed(2)}</p>
+        <p className="text-sm text-neutral-500">৳{Number(product.price).toFixed(2)}</p>
       ) : null}
     </a>
   );

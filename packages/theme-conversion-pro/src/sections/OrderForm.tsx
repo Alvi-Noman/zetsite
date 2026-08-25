@@ -29,7 +29,7 @@ export const orderFormSchema: SectionSchema = {
     // Value is a product *handle* — same convention PickerField/FeaturedCollection
     // use for the 'product'/'collection' field types (see FieldRow.tsx).
     { key: 'productId', type: 'product', label: 'Product', default: '', tab: 'content' },
-    { key: 'currency', type: 'text', label: 'Currency symbol', default: '$', tab: 'content' },
+    { key: 'currency', type: 'text', label: 'Currency symbol', default: '৳', tab: 'content' },
     // Delivery zones/rates are edited once in Settings > Shipping and
     // delivery, not per-section — see fetchStorefrontShippingSettings below.
     { key: 'submitButtonText', type: 'text', label: 'Submit button text', default: 'Place order', tab: 'content' },
@@ -38,7 +38,7 @@ export const orderFormSchema: SectionSchema = {
   ],
   defaultSettings: {
     productId: '',
-    currency: '$',
+    currency: '৳',
     submitButtonText: 'Place order',
     codLabel: 'Cash on delivery',
     successMessage: "Order received — we'll call to confirm.",
@@ -46,7 +46,7 @@ export const orderFormSchema: SectionSchema = {
 };
 
 function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponentProps<OrderFormSettings>) {
@@ -92,7 +92,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     };
   }, [storeSlug]);
 
-  const currency = settings.currency || '$';
+  const currency = settings.currency || '৳';
   const hasVariants = !!product?.variants?.length;
   const variant = hasVariants ? product!.variants[variantIndex] : undefined;
   const price = variant?.price ?? product?.price ?? 0;

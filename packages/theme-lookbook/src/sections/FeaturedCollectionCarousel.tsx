@@ -42,7 +42,7 @@ export function FeaturedCollectionCarousel({ settings, storeSlug, blocks, render
                 {p.media?.[0]?.url ? <ResponsiveImage src={p.media[0].url} alt={p.title} className="h-full w-full object-cover" priority={priority && i === 0} /> : null}
               </div>
               <p className="mt-2 truncate text-sm font-medium text-neutral-900">{p.title}</p>
-              {p.price != null ? <p className="text-xs text-neutral-500">${Number(p.price).toFixed(2)}</p> : null}
+              {p.price != null ? <p className="text-xs text-neutral-500">৳{Number(p.price).toFixed(2)}</p> : null}
             </a>
           ))}
         </div>

@@ -98,7 +98,7 @@ export function ProductTemplate({ storeSlug, handle }: ProductTemplateProps) {
         </div>
         <div>
           <h1 className="text-3xl font-semibold text-neutral-900">{product.title}</h1>
-          {displayPrice != null ? <p className="mt-2 text-xl text-neutral-700">${Number(displayPrice).toFixed(2)}</p> : null}
+          {displayPrice != null ? <p className="mt-2 text-xl text-neutral-700">৳{Number(displayPrice).toFixed(2)}</p> : null}
 
           {product.variants?.length > 1 ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export function ProductTemplate({ storeSlug, handle }: ProductTemplateProps) {
           <div className="mt-6 flex flex-wrap gap-4 text-xs text-neutral-500">
             <span>🔒 Secure checkout</span>
             <span>↩ 30-day returns</span>
-            <span>🚚 Free shipping over $50</span>
+            <span>🚚 Free shipping over ৳50</span>
           </div>
 
           <div className="mt-10 border-t border-neutral-200">
@@ -157,7 +157,7 @@ export function ProductTemplate({ storeSlug, handle }: ProductTemplateProps) {
                 ) : (
                   <p>No description yet.</p>
                 ))}
-              {tab === 'Shipping' && <p>Ships within 2-3 business days. Free shipping on orders over $50.</p>}
+              {tab === 'Shipping' && <p>Ships within 2-3 business days. Free shipping on orders over ৳50.</p>}
               {tab === 'Reviews' && <p>No reviews yet — be the first to review this product.</p>}
             </div>
           </div>
@@ -189,7 +189,7 @@ export function ProductTemplate({ storeSlug, handle }: ProductTemplateProps) {
             {image ? <ResponsiveImage src={image} alt="" className="h-10 w-10 rounded object-cover" /> : null}
             <div>
               <p className="text-sm font-medium text-neutral-900">{product.title}</p>
-              {displayPrice != null ? <p className="text-sm text-neutral-500">${Number(displayPrice).toFixed(2)}</p> : null}
+              {displayPrice != null ? <p className="text-sm text-neutral-500">৳{Number(displayPrice).toFixed(2)}</p> : null}
             </div>
           </div>
           <button

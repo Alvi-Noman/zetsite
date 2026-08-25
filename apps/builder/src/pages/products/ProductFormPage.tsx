@@ -164,7 +164,7 @@ export default function ProductFormPage() {
               <label className="mb-1 block text-sm font-medium text-ink-secondary">Price</label>
               <div className="relative w-48">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-tertiary">
-                  $
+                  ৳
                 </span>
                 <Input
                   type="number"
@@ -181,7 +181,7 @@ export default function ProductFormPage() {
               <label className="mb-1 block text-sm font-medium text-ink-secondary">Compare at price</label>
               <div className="relative w-48">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-tertiary">
-                  $
+                  ৳
                 </span>
                 <Input
                   type="number"

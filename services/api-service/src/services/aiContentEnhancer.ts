@@ -89,7 +89,7 @@ function buildPrompt(product: ProductContext, fields: EditableField[]): string {
   const lines = [
     `Product: ${product.title}`,
     product.category ? `Category: ${product.category}` : null,
-    product.price != null ? `Price: $${product.price.toFixed(2)}` : null,
+    product.price != null ? `Price: ৳${product.price.toFixed(2)}` : null,
     `Description: ${stripHtml(product.description).slice(0, 2000) || '(none provided)'}`,
     '',
     'Below are draft landing-page text fields. For each, return an improved value ONLY if you can genuinely improve it using the product description above — otherwise return the current value unchanged. Never invent specs, certifications, prices, or claims not present in the description. Follow each field\'s guidance exactly.',

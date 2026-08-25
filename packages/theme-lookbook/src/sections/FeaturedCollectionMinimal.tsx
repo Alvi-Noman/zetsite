@@ -31,7 +31,7 @@ export function FeaturedCollectionMinimal({ settings, storeSlug, blocks, renderB
         {products.map((p) => (
           <a key={p.id} href={`/products/${p.handle}`} className="flex items-center justify-between py-3 text-sm">
             <span className="font-medium text-neutral-900">{p.title}</span>
-            {p.price != null ? <span className="text-neutral-500">${Number(p.price).toFixed(2)}</span> : null}
+            {p.price != null ? <span className="text-neutral-500">৳{Number(p.price).toFixed(2)}</span> : null}
           </a>
         ))}
       </div>

@@ -17,7 +17,7 @@ export const comparisonTableSchema: SectionSchema = {
   defaultBlocks: [
     { type: 'heading', settings: { text: 'Compare plans', size: 'md' } },
     { type: 'plan', settings: {} },
-    { type: 'plan', settings: { name: 'Pro', price: '$59', highlighted: true } },
+    { type: 'plan', settings: { name: 'Pro', price: '৳59', highlighted: true } },
   ],
   fields: [
     { key: 'highlightBadgeText', type: 'text', label: 'Highlighted plan badge text', default: 'Most popular', tab: 'content' },

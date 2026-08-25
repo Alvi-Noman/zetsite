@@ -14,6 +14,7 @@ interface DomainRow {
 export default function DomainsPage() {
   const [domains, setDomains] = useState<DomainRow[] | null>(null);
   const [cnameTarget, setCnameTarget] = useState('');
+  const [aRecordIps, setARecordIps] = useState<string[]>([]);
   const [newDomain, setNewDomain] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
@@ -24,6 +25,7 @@ export default function DomainsPage() {
     api.get('/auth/domains').then((res) => {
       setDomains(res.data.domains);
       setCnameTarget(res.data.cnameTarget ?? '');
+      setARecordIps(res.data.aRecordIps ?? []);
     });
   }
 
@@ -144,8 +146,7 @@ export default function DomainsPage() {
                   {isApexDomain(d.domain) ? (
                     <>
                       Since <span className="font-mono">{d.domain}</span> is a root domain, add an{' '}
-                      <span className="font-mono font-semibold">A</span> record pointing to the same address as{' '}
-                      <span className="font-mono">{cnameTarget || 'your zetsite.com domain'}</span>.
+                      <span className="font-mono font-semibold">A</span> record pointing to it:
                     </>
                   ) : (
                     <>
@@ -153,6 +154,7 @@ export default function DomainsPage() {
                     </>
                   )}
                 </p>
+
                 {!isApexDomain(d.domain) && cnameTarget ? (
                   <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface px-3 py-2 font-mono text-xs">
                     <span className="text-ink-tertiary">Type</span>
@@ -163,6 +165,38 @@ export default function DomainsPage() {
                     <span className="text-ink">{cnameTarget}</span>
                   </div>
                 ) : null}
+
+                {isApexDomain(d.domain) && aRecordIps.length > 0 ? (
+                  <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface px-3 py-2 font-mono text-xs">
+                    <span className="text-ink-tertiary">Type</span>
+                    <span className="text-ink">A</span>
+                    <span className="text-ink-tertiary">Name</span>
+                    <span className="text-ink">@</span>
+                    <span className="text-ink-tertiary">Value</span>
+                    <span className="text-ink">
+                      {aRecordIps.map((ip, i) => (
+                        <span key={ip}>
+                          {ip}
+                          {i < aRecordIps.length - 1 ? <br /> : null}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                ) : null}
+
+                {isApexDomain(d.domain) && aRecordIps.length === 0 ? (
+                  <p className="mt-2 rounded-md bg-surface px-3 py-2 text-xs text-warning">
+                    Couldn&apos;t look up the platform&apos;s current IP address right now — try reloading this page.
+                    {cnameTarget ? (
+                      <>
+                        {' '}
+                        In the meantime you can point the A record at whatever IP{' '}
+                        <span className="font-mono">{cnameTarget}</span> resolves to.
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+
                 <p className="mt-2 text-xs text-ink-tertiary">
                   DNS changes can take a few minutes to a few hours to propagate. Click &quot;Verify connection&quot; once
                   you&apos;ve added the record.

@@ -10,7 +10,7 @@ interface CheckoutSettings {
 }
 
 const DEFAULT_SETTINGS: CheckoutSettings = {
-  currency: '$',
+  currency: '৳',
   codLabel: 'Cash on delivery',
   submitButtonText: 'Place order',
   successMessage: "Order received — we'll be in touch to confirm.",

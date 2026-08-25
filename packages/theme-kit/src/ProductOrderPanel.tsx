@@ -12,7 +12,7 @@ import {
 import { useAbandonedCheckoutDraft } from './useAbandonedCheckoutDraft.js';
 
 function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 export interface ProductOrderPanelClassNames {
@@ -76,7 +76,7 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
     };
   }, [storeSlug]);
 
-  const currency = checkout?.currency || '$';
+  const currency = checkout?.currency || '৳';
   const shippingOptions = shippingSettings?.options?.length ? shippingSettings.options : [{ label: 'Inside Dhaka', cost: 0 }];
   const hasVariants = product.variants.length > 0;
   const price = variant?.price ?? product.price ?? 0;

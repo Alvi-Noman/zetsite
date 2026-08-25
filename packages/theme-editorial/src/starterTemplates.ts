@@ -97,7 +97,7 @@ export const starterTemplates: StarterTemplate[] = [
         type: 'orderForm',
         settings: {
           productId: '',
-          currency: '$',
+          currency: '৳',
           shippingOptions: [{ label: 'Standard shipping', cost: 0 }],
           submitButtonText: 'Place order',
           codLabel: 'Cash on delivery available',

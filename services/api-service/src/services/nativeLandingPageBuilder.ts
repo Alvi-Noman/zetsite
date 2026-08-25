@@ -274,10 +274,10 @@ function buildProductLaunchSections(ctx: RecipeContext): { sections: NativeSecti
 
   // Same shopHero section Lookbook's opening hero uses — dominant product
   // image, name/tagline/price/CTA below it, instead of text overlaid on the image.
-  const priceText = product.price != null ? `$${product.price.toFixed(2)}` : '';
+  const priceText = product.price != null ? `৳${product.price.toFixed(2)}` : '';
   const compareAtPriceText =
     product.compareAtPrice != null && product.price != null && product.compareAtPrice > product.price
-      ? `$${product.compareAtPrice.toFixed(2)}`
+      ? `৳${product.compareAtPrice.toFixed(2)}`
       : '';
   sections.push({
     type: 'shopHero',
@@ -286,7 +286,7 @@ function buildProductLaunchSections(ctx: RecipeContext): { sections: NativeSecti
       productId: product.handle,
       price: priceText,
       compareAtPrice: compareAtPriceText,
-      currency: '$',
+      currency: '৳',
       backgroundColor: '#FAF7F2',
     },
     blocks: [
@@ -376,10 +376,10 @@ function buildLookbookSections(ctx: RecipeContext): { sections: NativeSection[];
   const { product, plainDescription, productImages } = ctx;
   const sections: NativeSection[] = [];
   const omittedSections: string[] = [];
-  const priceText = product.price != null ? `$${product.price.toFixed(2)}` : '';
+  const priceText = product.price != null ? `৳${product.price.toFixed(2)}` : '';
   const compareAtPriceText =
     product.compareAtPrice != null && product.price != null && product.compareAtPrice > product.price
-      ? `$${product.compareAtPrice.toFixed(2)}`
+      ? `৳${product.compareAtPrice.toFixed(2)}`
       : '';
 
   // 1. Hero — dominant product image, name, tagline, price, CTA.
@@ -390,7 +390,7 @@ function buildLookbookSections(ctx: RecipeContext): { sections: NativeSection[];
       productId: product.handle,
       price: priceText,
       compareAtPrice: compareAtPriceText,
-      currency: '$',
+      currency: '৳',
       backgroundColor: '#FAF7F2',
     },
     blocks: [
@@ -502,7 +502,7 @@ function buildLookbookSections(ctx: RecipeContext): { sections: NativeSection[];
       productId: product.handle,
       price: priceText,
       compareAtPrice: compareAtPriceText,
-      currency: '$',
+      currency: '৳',
       backgroundColor: '#FAF7F2',
     },
     blocks: [
@@ -604,7 +604,7 @@ function buildGenericStoreSections(ctx: RecipeContext, accentColor: string | nul
           type: 'plan',
           settings: {
             name: v.values.join(' / ') || v.label,
-            price: v.price != null ? `$${v.price.toFixed(2)}` : '',
+            price: v.price != null ? `৳${v.price.toFixed(2)}` : '',
             featuresText: '',
             highlighted: i === Math.floor(product.variants.length / 2),
           },

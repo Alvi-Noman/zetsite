@@ -36,7 +36,7 @@ export const orderFormSchema: SectionSchema = {
 };
 
 function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponentProps<OrderFormSettings>) {
@@ -92,7 +92,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     };
   }, [storeSlug]);
 
-  const currency = checkout?.currency || '$';
+  const currency = checkout?.currency || '৳';
   const shippingOptions = shippingSettings?.options?.length ? shippingSettings.options : [{ label: 'Inside Dhaka', cost: 0 }];
   const hasVariants = !!product?.variants?.length;
   const variant = hasVariants ? product!.variants[variantIndex] : undefined;

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchStorefrontOrder, type StorefrontOrderConfirmation, type CheckoutSettings } from '@zetsite/theme-kit';
 
 function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 function formatDate(iso: string): string {
@@ -69,7 +69,7 @@ export function OrderConfirmationPage({ storeSlug }: { storeSlug: string }) {
   }
 
   const { order, checkout } = state;
-  const currency = checkout.currency || '$';
+  const currency = checkout.currency || '৳';
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:py-16">

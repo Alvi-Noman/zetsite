@@ -86,7 +86,7 @@ export default function ProductsPage() {
                   <td className="px-4 py-3 text-ink-secondary">{product.category || '—'}</td>
                   <td className="px-4 py-3 text-ink-secondary">
                     {product.price !== undefined && product.price !== null
-                      ? `$${product.price.toFixed(2)}`
+                      ? `৳${product.price.toFixed(2)}`
                       : '—'}
                   </td>
                 </tr>

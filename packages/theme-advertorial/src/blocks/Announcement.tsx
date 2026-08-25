@@ -9,10 +9,10 @@ export const announcementSchema: SectionSchema = {
   type: 'announcement',
   label: 'Announcement',
   fields: [
-    { key: 'text', type: 'text', label: 'Message', default: 'Free shipping on orders over $50', tab: 'content' },
+    { key: 'text', type: 'text', label: 'Message', default: 'Free shipping on orders over ৳50', tab: 'content' },
     { key: 'url', type: 'url', label: 'Link (optional)', default: '', tab: 'content' },
   ],
-  defaultSettings: { text: 'Free shipping on orders over $50', url: '' },
+  defaultSettings: { text: 'Free shipping on orders over ৳50', url: '' },
 };
 
 // Rendered by the AnnouncementBar section (rotates through the full list).

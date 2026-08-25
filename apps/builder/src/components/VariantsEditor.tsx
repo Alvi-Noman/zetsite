@@ -387,7 +387,7 @@ export default function VariantsEditor({
                     <td className="px-3 py-2">
                       <div className="relative w-28">
                         <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-ink-tertiary">
-                          $
+                          ৳
                         </span>
                         <Input
                           type="number"

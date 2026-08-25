@@ -40,7 +40,7 @@ interface AnnouncementData {
   url?: string;
 }
 
-const FALLBACK: AnnouncementData = { text: 'Free shipping on orders over $50', url: '' };
+const FALLBACK: AnnouncementData = { text: 'Free shipping on orders over ৳50', url: '' };
 const TEXT_ALIGN_CLASS: Record<ContentAlign, string> = { left: 'text-left', center: 'text-center', right: 'text-right' };
 
 export function AnnouncementBar({ settings, blocks }: SectionComponentProps<AnnouncementBarSettings>) {

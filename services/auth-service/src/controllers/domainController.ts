@@ -35,11 +35,27 @@ function serializeDomain(doc: any) {
   };
 }
 
+// The concrete IP(s) the root domain currently resolves to, for the A-record
+// instructions apex domains need — resolved live rather than hardcoded so it
+// never goes stale if the platform's IP changes.
+async function resolveRootIps(): Promise<string[]> {
+  const root = rootDomain();
+  if (!root) return [];
+  try {
+    return await dns.resolve4(root);
+  } catch {
+    return [];
+  }
+}
+
 export async function listDomains(req: AuthenticatedRequest, res: Response) {
   const db = getDb();
   const storeId = new ObjectId(req.user!.store!.id);
-  const domains = await db.collection('custom_domains').find({ storeId }).sort({ createdAt: -1 }).toArray();
-  res.json({ success: true, domains: domains.map(serializeDomain), cnameTarget: rootDomain() });
+  const [domains, aRecordIps] = await Promise.all([
+    db.collection('custom_domains').find({ storeId }).sort({ createdAt: -1 }).toArray(),
+    resolveRootIps(),
+  ]);
+  res.json({ success: true, domains: domains.map(serializeDomain), cnameTarget: rootDomain(), aRecordIps });
 }
 
 export async function addDomain(req: AuthenticatedRequest, res: Response) {

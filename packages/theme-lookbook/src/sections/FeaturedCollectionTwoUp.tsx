@@ -39,7 +39,7 @@ export function FeaturedCollectionTwoUp({ settings, storeSlug, blocks, renderBlo
               {p.media?.[0]?.url ? <ResponsiveImage src={p.media[0].url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" priority={priority && i === 0} /> : null}
             </div>
             <p className="mt-3 text-base font-medium text-neutral-900">{p.title}</p>
-            {p.price != null ? <p className="text-sm text-neutral-500">${Number(p.price).toFixed(2)}</p> : null}
+            {p.price != null ? <p className="text-sm text-neutral-500">৳{Number(p.price).toFixed(2)}</p> : null}
           </a>
         ))}
       </div>

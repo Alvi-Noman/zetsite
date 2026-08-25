@@ -98,7 +98,7 @@ export const starterTemplates: StarterTemplate[] = [
       {
         type: 'comparisonTable',
         settings: {},
-        blocks: [heading('Compare plans', 'md'), { type: 'plan', settings: {} }, { type: 'plan', settings: { name: 'Pro', price: '$59', highlighted: true } }],
+        blocks: [heading('Compare plans', 'md'), { type: 'plan', settings: {} }, { type: 'plan', settings: { name: 'Pro', price: '৳59', highlighted: true } }],
       },
       { type: 'socialProofBar', settings: {}, blocks: [{ type: 'proofMessage', settings: {} }] },
       { type: 'newsletter', settings: {}, blocks: [heading('Stay in the loop', 'md'), text('Be first to hear about new drops')] },

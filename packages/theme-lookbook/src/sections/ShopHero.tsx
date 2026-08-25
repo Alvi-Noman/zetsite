@@ -28,9 +28,9 @@ export const shopHeroSchema: SectionSchema = {
     // When set, price/compareAtPrice below are overridden by this product's live
     // values — same 'product' picker convention as OrderForm's productId field.
     { key: 'productId', type: 'product', label: 'Product (for live price)', default: '', tab: 'content' },
-    { key: 'price', type: 'text', label: 'Price (used if no product is linked above)', default: '$129', tab: 'content' },
+    { key: 'price', type: 'text', label: 'Price (used if no product is linked above)', default: '৳129', tab: 'content' },
     { key: 'compareAtPrice', type: 'text', label: 'Compare at price (optional, strikethrough)', default: '', tab: 'content' },
-    { key: 'currency', type: 'text', label: 'Currency symbol (used with a linked product)', default: '$', tab: 'content' },
+    { key: 'currency', type: 'text', label: 'Currency symbol (used with a linked product)', default: '৳', tab: 'content' },
     { key: 'backgroundColor', type: 'color', label: 'Background color', default: '#FAF7F2', tab: 'style' },
     ALIGN_FIELD,
   ],
@@ -38,16 +38,16 @@ export const shopHeroSchema: SectionSchema = {
     imageUrl: '',
     badgeText: 'New arrival',
     productId: '',
-    price: '$129',
+    price: '৳129',
     compareAtPrice: '',
-    currency: '$',
+    currency: '৳',
     backgroundColor: '#FAF7F2',
     align: 'center',
   },
 };
 
 function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 // The image is deliberately the dominant element — for visual/commodity

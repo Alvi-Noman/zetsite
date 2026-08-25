@@ -81,7 +81,7 @@ export function CollectionTemplate({ storeSlug, handle }: CollectionTemplateProp
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-bold uppercase tracking-wide text-neutral-900">{p.title}</p>
-                  {p.price != null ? <p className="text-sm text-neutral-500">${Number(p.price).toFixed(2)}</p> : null}
+                  {p.price != null ? <p className="text-sm text-neutral-500">৳{Number(p.price).toFixed(2)}</p> : null}
                 </div>
               </a>
             );

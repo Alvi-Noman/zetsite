@@ -12,7 +12,7 @@ import {
 } from '@zetsite/theme-kit';
 
 export function money(currency: string, value: number): string {
-  return `${currency || '$'}${value.toFixed(2)}`;
+  return `${currency || '৳'}${value.toFixed(2)}`;
 }
 
 // Shared by every Order form design variant — currency, shipping, COD label,
@@ -76,7 +76,7 @@ export function useOrderForm(storeSlug: string, productId: string) {
     };
   }, [storeSlug]);
 
-  const currency = checkout?.currency || '$';
+  const currency = checkout?.currency || '৳';
   const shippingOptions = shippingSettings?.options?.length ? shippingSettings.options : [{ label: 'Inside Dhaka', cost: 0 }];
   const hasVariants = !!product?.variants?.length;
   const variant = hasVariants ? product!.variants[variantIndex] : undefined;

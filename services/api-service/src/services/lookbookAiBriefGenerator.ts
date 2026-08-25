@@ -54,7 +54,7 @@ function buildPrompt(product: ProductContext): string {
   return [
     `Product title: ${product.title}`,
     product.category ? `Category: ${product.category}` : null,
-    product.price != null ? `Price: $${product.price.toFixed(2)}` : null,
+    product.price != null ? `Price: ৳${product.price.toFixed(2)}` : null,
     `Description: ${stripHtml(product.description).slice(0, 3000) || '(none provided)'}`,
     '',
     'This is for a "Lookbook" visual-merchandising landing page (watches, sunglasses, apparel, and similar considered-design products) — the tone is aspirational and craftsmanship-led, NOT a problem/solution pitch. Treat BOTH the product title and the description as sources of real product facts — merchants often pack materials, specs, or dimensions into the title itself, not just the description.',

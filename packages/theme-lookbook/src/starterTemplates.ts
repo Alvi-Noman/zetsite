@@ -44,7 +44,7 @@ export const starterTemplates: StarterTemplate[] = [
       // 1. Hero — dominant product image, name, tagline, price, CTA.
       {
         type: 'shopHero',
-        settings: { imageUrl: '', productId: '', price: '$129', compareAtPrice: '', currency: '$', backgroundColor: '#FAF7F2' },
+        settings: { imageUrl: '', productId: '', price: '৳129', compareAtPrice: '', currency: '৳', backgroundColor: '#FAF7F2' },
         blocks: [heading('Product name', 'lg'), text('A short, evocative tagline that sets the tone.'), button('Buy now')],
       },
       // 2. Product gallery — multiple angles, zoom, in-use shots.
@@ -142,7 +142,7 @@ export const starterTemplates: StarterTemplate[] = [
       // 12. Final CTA — closing product shot, price, buy button (reuses shopHero).
       {
         type: 'shopHero',
-        settings: { imageUrl: '', productId: '', price: '$129', compareAtPrice: '', currency: '$', backgroundColor: '#FAF7F2' },
+        settings: { imageUrl: '', productId: '', price: '৳129', compareAtPrice: '', currency: '৳', backgroundColor: '#FAF7F2' },
         blocks: [heading('Yours, today', 'md'), text('Free shipping. 30-day returns. Made to last.'), button('Buy now')],
       },
       // Checkout — the one central order form every "Buy now" button on this

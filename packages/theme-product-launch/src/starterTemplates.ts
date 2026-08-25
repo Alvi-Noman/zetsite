@@ -46,7 +46,7 @@ export const starterTemplates: StarterTemplate[] = [
       // Same shopHero section Lookbook uses for its opening hero.
       {
         type: 'shopHero',
-        settings: { imageUrl: '', productId: '', price: '', compareAtPrice: '', currency: '$', backgroundColor: '#FAF7F2' },
+        settings: { imageUrl: '', productId: '', price: '', compareAtPrice: '', currency: '৳', backgroundColor: '#FAF7F2' },
         blocks: [
           heading('The easiest way to get [outcome], without [pain point]', 'lg'),
           text('Built for people who want results without the usual complexity, cost, or wasted time.'),

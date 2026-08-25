@@ -40,7 +40,7 @@ export function FeaturedCollectionList({ settings, storeSlug, blocks, renderBloc
             </div>
             <div>
               <p className="text-base font-medium text-neutral-900">{p.title}</p>
-              {p.price != null ? <p className="mt-1 text-sm text-neutral-500">${Number(p.price).toFixed(2)}</p> : null}
+              {p.price != null ? <p className="mt-1 text-sm text-neutral-500">৳{Number(p.price).toFixed(2)}</p> : null}
             </div>
           </a>
         ))}
