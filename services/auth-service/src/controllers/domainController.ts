@@ -242,6 +242,19 @@ export async function deleteDomain(req: AuthenticatedRequest, res: Response) {
   res.json({ success: true });
 }
 
+// An apex connection's setup instructions also tell the merchant to point
+// `www` here as a companion record (see computeDnsRecords), but a merchant
+// only ever registers the one hostname they typed (e.g. "brownbazarbd.com")
+// as a `custom_domains` entry — never "www.brownbazarbd.com" separately. So
+// both the TLS gate and store resolution below need to treat the bare and
+// www-prefixed forms of a connected domain as the same connection, or the
+// www form would fail to even get a certificate despite DNS being set up
+// exactly as instructed.
+function domainVariants(host: string): string[] {
+  const bare = host.startsWith('www.') ? host.slice(4) : host;
+  return [bare, `www.${bare}`];
+}
+
 // Internal, unauthenticated lookup used by api-service and the storefront
 // app to resolve a request's Host header to a store when it isn't a
 // `*.<rootDomain>` subdomain — i.e. it's a connected custom domain.
@@ -253,7 +266,7 @@ export async function resolveDomain(req: Request, res: Response) {
   }
 
   const db = getDb();
-  const doc = await db.collection('custom_domains').findOne({ domain: host, status: 'verified' });
+  const doc = await db.collection('custom_domains').findOne({ domain: { $in: domainVariants(host) }, status: 'verified' });
   if (!doc) {
     res.status(404).json({ success: false, message: 'No store connected to this domain' });
     return;
@@ -274,6 +287,8 @@ export async function resolveDomain(req: Request, res: Response) {
 // control.
 export async function isDomainConnected(domain: string): Promise<boolean> {
   const db = getDb();
-  const doc = await db.collection('custom_domains').findOne({ domain: domain.toLowerCase(), status: 'verified' });
+  const doc = await db
+    .collection('custom_domains')
+    .findOne({ domain: { $in: domainVariants(domain.toLowerCase()) }, status: 'verified' });
   return !!doc;
 }
