@@ -1,4 +1,4 @@
-import { ArrowRight, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, X } from 'lucide-react';
 import type { SectionComponentProps, SectionSchema } from '@zetsite/theme-kit';
 import { Editable, ALIGN_FIELD, ALIGN_CLASS, type ContentAlign } from '@zetsite/theme-kit';
 
@@ -66,6 +66,16 @@ export function ProblemSolution({ settings, onFieldChange }: SectionComponentPro
             multiline
             className="prose prose-neutral mt-3 text-sm leading-relaxed text-neutral-600"
           />
+        </div>
+
+        {/* Mobile-only connector between the stacked cards — a vertical line
+            with an arrow marking the "problem leads to solution" flow.
+            Disappears at sm+, where the two cards sit side by side instead. */}
+        <div className="relative flex h-10 items-center justify-center sm:hidden" aria-hidden="true">
+          <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-neutral-300" />
+          <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-yellow-700 text-white">
+            <ArrowDown size={14} strokeWidth={2.5} />
+          </span>
         </div>
 
         <div className={`flex flex-col rounded-2xl border border-yellow-100 bg-yellow-50/60 p-6 sm:p-8 ${align}`}>

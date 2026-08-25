@@ -39,19 +39,24 @@ export function HowItWorks({ settings, blocks, onBlockFieldChange }: SectionComp
             <h2 className="text-2xl font-serif font-normal text-neutral-900 sm:text-3xl">{settings.heading}</h2>
           </div>
         ) : null}
-        <div className="grid gap-8 sm:grid-cols-3 sm:gap-6">
+        {/* Mobile: a continuous left border acts as the connecting line, with
+            each step's number badge pinned to it — the same proven pattern
+            as HowItWorksTimeline.tsx, since a border naturally spans the
+            full stack height without needing to compute per-item offsets.
+            Desktop (sm+): unchanged horizontal-line layout, grid columns. */}
+        <div className="relative border-l-2 border-neutral-200 pl-10 sm:grid sm:gap-6 sm:grid-cols-3 sm:border-0 sm:pl-0">
           {steps.map((block, i) => {
             const step = block.settings as unknown as StepSettings;
             const fieldChange = onBlockFieldChange ? (key: string, value: string) => onBlockFieldChange(block.id, key, value) : undefined;
             return (
-              <div key={block.id} className="relative flex flex-col items-center text-center sm:items-start sm:text-left">
+              <div key={block.id} className="relative flex flex-col items-start pb-10 text-left last:pb-0 sm:pb-0">
                 {i < steps.length - 1 ? (
                   <span className="absolute left-1/2 top-6 hidden h-px w-full -translate-x-0 bg-neutral-200 sm:left-[calc(50%+28px)] sm:block sm:w-[calc(100%-28px)]" />
                 ) : null}
-                <span className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-yellow-700 text-lg font-bold text-white">
+                <span className="absolute -left-14 top-0 z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-700 text-sm font-bold text-white sm:relative sm:left-auto sm:top-auto sm:h-12 sm:w-12 sm:text-lg">
                   {i + 1}
                 </span>
-                <Editable as="h3" fieldKey="title" value={step.title ?? ''} onFieldChange={fieldChange} className="mt-4 text-base font-bold text-neutral-900 block" />
+                <Editable as="h3" fieldKey="title" value={step.title ?? ''} onFieldChange={fieldChange} className="text-base font-bold text-neutral-900 block sm:mt-4" />
                 <Editable
                   as="p"
                   fieldKey="description"
