@@ -25,14 +25,34 @@ function isReserved(domain: string): boolean {
   return domain === root || domain.endsWith(`.${root}`);
 }
 
-function serializeDomain(doc: any) {
-  return {
-    id: doc._id.toString(),
-    domain: doc.domain,
-    status: doc.status,
-    createdAt: doc.createdAt,
-    verifiedAt: doc.verifiedAt ?? null,
-  };
+function isApexDomain(domain: string): boolean {
+  return domain.split('.').length === 2;
+}
+
+interface DnsRecordDiff {
+  type: 'A' | 'CNAME';
+  name: string;
+  currentValue: string | null;
+  targetValue: string;
+  action: 'add' | 'update';
+}
+
+async function currentCname(fqdn: string): Promise<string | null> {
+  try {
+    const targets = await dns.resolveCname(fqdn);
+    return targets[0]?.replace(/\.$/, '') ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function currentA(fqdn: string): Promise<string | null> {
+  try {
+    const ips = await dns.resolve4(fqdn);
+    return ips[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // The concrete IP(s) the root domain currently resolves to, for the A-record
@@ -48,14 +68,62 @@ async function resolveRootIps(): Promise<string[]> {
   }
 }
 
+// Live diff between what a domain's DNS actually has right now and what it
+// needs, in the same "current value -> update to" shape registrars and other
+// platforms' domain-connection screens use — built from real lookups rather
+// than generic prose, so a merchant sees exactly what to change.
+async function computeDnsRecords(domain: string): Promise<DnsRecordDiff[]> {
+  const root = rootDomain();
+  if (!root) return [];
+  const rootIps = await resolveRootIps();
+  const primaryIp = rootIps[0] ?? '';
+
+  if (isApexDomain(domain)) {
+    const [currentApexA, currentWwwCname] = await Promise.all([currentA(domain), currentCname(`www.${domain}`)]);
+    const records: DnsRecordDiff[] = [];
+    if (currentWwwCname !== root) {
+      records.push({ type: 'CNAME', name: 'www', currentValue: currentWwwCname, targetValue: root, action: currentWwwCname ? 'update' : 'add' });
+    }
+    if (primaryIp && currentApexA !== primaryIp) {
+      records.push({ type: 'A', name: '@', currentValue: currentApexA, targetValue: primaryIp, action: currentApexA ? 'update' : 'add' });
+    }
+    return records;
+  }
+
+  // The DNS record's "Name" is the label relative to the *merchant's own*
+  // domain (e.g. "shop" for shop.brownbazarbd.com) — never relative to our
+  // root domain, since a connected domain is never actually a subdomain of
+  // ours. Strips the last two dot-separated labels (registrable root +
+  // TLD); good enough for the common single-part-TLD case this product
+  // targets (.com/.net/.org/etc — not eTLDs like .co.uk).
+  const parts = domain.split('.');
+  const label = parts.slice(0, -2).join('.') || parts[0];
+  const currentTarget = await currentCname(domain);
+  if (currentTarget === root) return [];
+  return [{ type: 'CNAME', name: label, currentValue: currentTarget, targetValue: root, action: currentTarget ? 'update' : 'add' }];
+}
+
+function serializeDomain(doc: any) {
+  return {
+    id: doc._id.toString(),
+    domain: doc.domain,
+    status: doc.status,
+    createdAt: doc.createdAt,
+    verifiedAt: doc.verifiedAt ?? null,
+  };
+}
+
 export async function listDomains(req: AuthenticatedRequest, res: Response) {
   const db = getDb();
   const storeId = new ObjectId(req.user!.store!.id);
-  const [domains, aRecordIps] = await Promise.all([
-    db.collection('custom_domains').find({ storeId }).sort({ createdAt: -1 }).toArray(),
-    resolveRootIps(),
-  ]);
-  res.json({ success: true, domains: domains.map(serializeDomain), cnameTarget: rootDomain(), aRecordIps });
+  const domains = await db.collection('custom_domains').find({ storeId }).sort({ createdAt: -1 }).toArray();
+  const withRecords = await Promise.all(
+    domains.map(async (d) => ({
+      ...serializeDomain(d),
+      records: d.status === 'pending' ? await computeDnsRecords(d.domain) : [],
+    })),
+  );
+  res.json({ success: true, domains: withRecords });
 }
 
 export async function addDomain(req: AuthenticatedRequest, res: Response) {
@@ -94,7 +162,8 @@ export async function addDomain(req: AuthenticatedRequest, res: Response) {
   });
 
   const doc = await db.collection('custom_domains').findOne({ _id: result.insertedId });
-  res.status(201).json({ success: true, domain: serializeDomain(doc) });
+  const records = await computeDnsRecords(domain);
+  res.status(201).json({ success: true, domain: { ...serializeDomain(doc), records } });
 }
 
 // Checks whether the domain's DNS actually points at this platform yet.
@@ -142,10 +211,12 @@ export async function verifyDomain(req: AuthenticatedRequest, res: Response) {
 
   const connected = await checkDnsConnected(doc.domain);
   if (!connected) {
+    const records = await computeDnsRecords(doc.domain);
     res.json({
       success: true,
       verified: false,
       message: "DNS doesn't point here yet — this can take a few minutes to a few hours to propagate after you update it.",
+      records,
     });
     return;
   }
@@ -153,7 +224,7 @@ export async function verifyDomain(req: AuthenticatedRequest, res: Response) {
   await db
     .collection('custom_domains')
     .updateOne({ _id: doc._id }, { $set: { status: 'verified', verifiedAt: new Date() } });
-  res.json({ success: true, verified: true });
+  res.json({ success: true, verified: true, domain: doc.domain });
 }
 
 export async function deleteDomain(req: AuthenticatedRequest, res: Response) {

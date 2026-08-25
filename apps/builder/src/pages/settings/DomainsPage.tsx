@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, RefreshCw, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, ExternalLink, Copy, Check, ChevronDown, CircleCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button, Input, Card, Badge } from '@/components/ui';
+
+interface DnsRecordDiff {
+  type: 'A' | 'CNAME';
+  name: string;
+  currentValue: string | null;
+  targetValue: string;
+  action: 'add' | 'update';
+}
 
 interface DomainRow {
   id: string;
@@ -9,24 +17,152 @@ interface DomainRow {
   status: 'pending' | 'verified';
   createdAt: string;
   verifiedAt: string | null;
+  records: DnsRecordDiff[];
+}
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label="Copy"
+      onClick={async () => {
+        await navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="rounded p-1 text-ink-tertiary hover:bg-surface-hover hover:text-ink"
+    >
+      {copied ? <Check size={13} className="text-success" /> : <Copy size={13} />}
+    </button>
+  );
+}
+
+function RecordsTable({ title, rows }: { title: string; rows: DnsRecordDiff[] }) {
+  if (rows.length === 0) return null;
+  const showCurrent = title.startsWith('Update');
+  return (
+    <div className="mb-4">
+      <p className="mb-1.5 text-xs font-semibold text-ink">{title}</p>
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-border bg-surface-secondary text-ink-tertiary">
+              <th className="px-3 py-2 font-medium">Type</th>
+              <th className="px-3 py-2 font-medium">Name</th>
+              {showCurrent && <th className="px-3 py-2 font-medium">Current value</th>}
+              <th className="px-3 py-2 font-medium">{showCurrent ? 'Update to' : 'Value'}</th>
+              <th className="w-8 px-2 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-border last:border-0">
+                <td className="px-3 py-2 font-mono text-ink">{r.type}</td>
+                <td className="px-3 py-2 font-mono text-ink">{r.name}</td>
+                {showCurrent && (
+                  <td className="px-3 py-2 font-mono text-ink-tertiary">{r.currentValue ?? '(empty)'}</td>
+                )}
+                <td className="px-3 py-2 font-mono font-semibold text-ink">{r.targetValue}</td>
+                <td className="px-2 py-2">
+                  <CopyButton value={r.targetValue} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DomainSetupPanel({ domain, onConnected }: { domain: DomainRow; onConnected: () => void }) {
+  const [records, setRecords] = useState(domain.records);
+  const [checking, setChecking] = useState(false);
+  const [checkedOnce, setCheckedOnce] = useState(false);
+  const [notYetMessage, setNotYetMessage] = useState('');
+
+  const addRows = records.filter((r) => r.action === 'add');
+  const updateRows = records.filter((r) => r.action === 'update');
+
+  async function verify() {
+    setChecking(true);
+    setNotYetMessage('');
+    try {
+      const res = await api.post(`/auth/domains/${domain.id}/verify`);
+      if (res.data.verified) {
+        onConnected();
+      } else {
+        setCheckedOnce(true);
+        setNotYetMessage(res.data.message ?? "DNS doesn't point here yet.");
+        if (res.data.records) setRecords(res.data.records);
+      }
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-md border border-border bg-surface-secondary p-4">
+      <p className="mb-3 text-sm font-medium text-ink">Configure DNS records at your registrar</p>
+      <RecordsTable title="Add these new records" rows={addRows} />
+      <RecordsTable title="Update these existing records" rows={updateRows} />
+
+      {records.length === 0 ? (
+        <p className="text-sm text-ink-secondary">
+          These records already look correct — click below to finish connecting.
+        </p>
+      ) : (
+        <p className="mb-3 text-xs text-ink-tertiary">
+          Log in to wherever <span className="font-mono">{domain.domain}</span> is registered, open its DNS
+          settings, and make the change above. DNS changes can take a few minutes to a few hours to propagate.
+        </p>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Button variant="primary" size="sm" onClick={verify} disabled={checking}>
+          <RefreshCw size={13} className={checking ? 'animate-spin' : ''} />
+          {checking ? 'Checking…' : checkedOnce ? 'Check again' : "I've updated my DNS records"}
+        </Button>
+        {notYetMessage ? <span className="text-xs font-medium text-warning">{notYetMessage}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function ConnectedCelebration({ domain, onDone }: { domain: string; onDone: () => void }) {
+  return (
+    <div className="mt-4 flex flex-col items-center rounded-md border border-border bg-success-subtle px-6 py-8 text-center">
+      <CircleCheck size={32} className="text-success" />
+      <p className="mt-3 text-base font-semibold text-ink">Domain connected!</p>
+      <p className="mt-1 text-sm text-ink-secondary">
+        Your storefront is live at{' '}
+        <a href={`https://${domain}`} target="_blank" rel="noreferrer" className="font-medium text-link hover:underline">
+          {domain}
+        </a>
+      </p>
+      <div className="mt-4 flex items-center gap-2">
+        <Button variant="primary" size="sm" onClick={() => window.open(`https://${domain}`, '_blank')}>
+          Visit site
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onDone}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default function DomainsPage() {
   const [domains, setDomains] = useState<DomainRow[] | null>(null);
-  const [cnameTarget, setCnameTarget] = useState('');
-  const [aRecordIps, setARecordIps] = useState<string[]>([]);
   const [newDomain, setNewDomain] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
-  const [verifying, setVerifying] = useState<string | null>(null);
-  const [verifyMessage, setVerifyMessage] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [justConnected, setJustConnected] = useState<string | null>(null);
 
   function load() {
-    api.get('/auth/domains').then((res) => {
-      setDomains(res.data.domains);
-      setCnameTarget(res.data.cnameTarget ?? '');
-      setARecordIps(res.data.aRecordIps ?? []);
-    });
+    api.get('/auth/domains').then((res) => setDomains(res.data.domains));
   }
 
   useEffect(load, []);
@@ -37,28 +173,14 @@ export default function DomainsPage() {
     setAdding(true);
     setAddError('');
     try {
-      await api.post('/auth/domains', { domain: newDomain.trim() });
+      const res = await api.post('/auth/domains', { domain: newDomain.trim() });
       setNewDomain('');
+      setExpanded(res.data.domain.id);
       load();
     } catch (err: any) {
       setAddError(err?.response?.data?.message ?? 'Could not add domain');
     } finally {
       setAdding(false);
-    }
-  }
-
-  async function verify(id: string) {
-    setVerifying(id);
-    try {
-      const res = await api.post(`/auth/domains/${id}/verify`);
-      if (res.data.verified) {
-        setVerifyMessage((m) => ({ ...m, [id]: '' }));
-        load();
-      } else {
-        setVerifyMessage((m) => ({ ...m, [id]: res.data.message ?? "DNS doesn't point here yet." }));
-      }
-    } finally {
-      setVerifying(null);
     }
   }
 
@@ -80,11 +202,7 @@ export default function DomainsPage() {
         <h3 className="mb-3 text-sm font-semibold text-ink">Connect a domain</h3>
         <form onSubmit={addDomain} className="flex items-start gap-2">
           <div className="flex-1">
-            <Input
-              value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
-              placeholder="shop.yourbrand.com"
-            />
+            <Input value={newDomain} onChange={(e) => setNewDomain(e.target.value)} placeholder="shop.yourbrand.com" />
             {addError ? <p className="mt-1.5 text-xs font-medium text-danger">{addError}</p> : null}
           </div>
           <Button type="submit" variant="primary" disabled={adding}>
@@ -106,116 +224,58 @@ export default function DomainsPage() {
       )}
 
       <div className="space-y-3">
-        {domains?.map((d) => (
-          <Card key={d.id} className="p-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-ink">{d.domain}</p>
-                <Badge tone={d.status === 'verified' ? 'success' : 'warning'}>
-                  {d.status === 'verified' ? 'Connected' : 'Pending verification'}
-                </Badge>
-                {d.status === 'verified' ? (
-                  <a
-                    href={`https://${d.domain}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-ink-tertiary hover:text-ink"
-                    aria-label="Visit"
-                  >
-                    <ExternalLink size={13} />
-                  </a>
-                ) : null}
-              </div>
-              <div className="flex items-center gap-2">
-                {d.status === 'pending' && (
-                  <Button variant="secondary" size="sm" onClick={() => verify(d.id)} disabled={verifying === d.id}>
-                    <RefreshCw size={13} className={verifying === d.id ? 'animate-spin' : ''} />
-                    {verifying === d.id ? 'Checking…' : 'Verify connection'}
-                  </Button>
-                )}
-                <Button variant="danger" size="sm" onClick={() => remove(d.id)} aria-label="Remove domain">
-                  <Trash2 size={13} />
-                </Button>
-              </div>
-            </div>
-
-            {d.status === 'pending' && (
-              <div className="mt-4 rounded-md border border-border bg-surface-secondary p-4 text-sm">
-                <p className="font-medium text-ink">Add this DNS record at your domain registrar</p>
-                <p className="mt-1 text-ink-secondary">
-                  {isApexDomain(d.domain) ? (
-                    <>
-                      Since <span className="font-mono">{d.domain}</span> is a root domain, add an{' '}
-                      <span className="font-mono font-semibold">A</span> record pointing to it:
-                    </>
-                  ) : (
-                    <>
-                      Add a <span className="font-mono font-semibold">CNAME</span> record:
-                    </>
+        {domains?.map((d) => {
+          const isOpen = expanded === d.id;
+          const showCelebration = justConnected === d.id;
+          return (
+            <Card key={d.id} className="p-5">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(isOpen ? null : d.id)}
+                  className="flex flex-1 items-center gap-2 text-left"
+                >
+                  <p className="font-medium text-ink">{d.domain}</p>
+                  <Badge tone={d.status === 'verified' ? 'success' : 'warning'}>
+                    {d.status === 'verified' ? 'Live' : 'Needs setup'}
+                  </Badge>
+                  {d.status === 'pending' && (
+                    <ChevronDown size={14} className={`text-ink-tertiary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   )}
-                </p>
-
-                {!isApexDomain(d.domain) && cnameTarget ? (
-                  <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface px-3 py-2 font-mono text-xs">
-                    <span className="text-ink-tertiary">Type</span>
-                    <span className="text-ink">CNAME</span>
-                    <span className="text-ink-tertiary">Name</span>
-                    <span className="text-ink">{d.domain.split('.')[0]}</span>
-                    <span className="text-ink-tertiary">Value</span>
-                    <span className="text-ink">{cnameTarget}</span>
-                  </div>
-                ) : null}
-
-                {isApexDomain(d.domain) && aRecordIps.length > 0 ? (
-                  <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface px-3 py-2 font-mono text-xs">
-                    <span className="text-ink-tertiary">Type</span>
-                    <span className="text-ink">A</span>
-                    <span className="text-ink-tertiary">Name</span>
-                    <span className="text-ink">@</span>
-                    <span className="text-ink-tertiary">Value</span>
-                    <span className="text-ink">
-                      {aRecordIps.map((ip, i) => (
-                        <span key={ip}>
-                          {ip}
-                          {i < aRecordIps.length - 1 ? <br /> : null}
-                        </span>
-                      ))}
-                    </span>
-                  </div>
-                ) : null}
-
-                {isApexDomain(d.domain) && aRecordIps.length === 0 ? (
-                  <p className="mt-2 rounded-md bg-surface px-3 py-2 text-xs text-warning">
-                    Couldn&apos;t look up the platform&apos;s current IP address right now — try reloading this page.
-                    {cnameTarget ? (
-                      <>
-                        {' '}
-                        In the meantime you can point the A record at whatever IP{' '}
-                        <span className="font-mono">{cnameTarget}</span> resolves to.
-                      </>
-                    ) : null}
-                  </p>
-                ) : null}
-
-                <p className="mt-2 text-xs text-ink-tertiary">
-                  DNS changes can take a few minutes to a few hours to propagate. Click &quot;Verify connection&quot; once
-                  you&apos;ve added the record.
-                </p>
-                {verifyMessage[d.id] ? (
-                  <p className="mt-2 text-xs font-medium text-warning">{verifyMessage[d.id]}</p>
-                ) : null}
+                </button>
+                <div className="flex items-center gap-2">
+                  {d.status === 'verified' ? (
+                    <a
+                      href={`https://${d.domain}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-md p-1.5 text-ink-tertiary hover:bg-surface-hover hover:text-ink"
+                      aria-label="Visit"
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                  ) : null}
+                  <Button variant="danger" size="sm" onClick={() => remove(d.id)} aria-label="Remove domain">
+                    <Trash2 size={13} />
+                  </Button>
+                </div>
               </div>
-            )}
-          </Card>
-        ))}
+
+              {showCelebration ? (
+                <ConnectedCelebration domain={d.domain} onDone={() => setJustConnected(null)} />
+              ) : d.status === 'pending' && isOpen ? (
+                <DomainSetupPanel
+                  domain={d}
+                  onConnected={() => {
+                    setJustConnected(d.id);
+                    load();
+                  }}
+                />
+              ) : null}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
-}
-
-function isApexDomain(domain: string): boolean {
-  // A root/apex domain has exactly one label before the TLD (example.com),
-  // vs. a subdomain like shop.example.com — apex domains can't use a CNAME
-  // per DNS spec, so they need an A record instead.
-  return domain.split('.').length === 2;
 }
