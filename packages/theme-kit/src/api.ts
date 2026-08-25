@@ -200,6 +200,34 @@ export async function fetchStorefrontPixelSettings(storeSlug: string): Promise<S
   return data?.pixel ?? DEFAULT_PIXEL_SETTINGS;
 }
 
+// Server-side leg for the two funnel events fired ahead of Purchase —
+// ViewContent (product page view) and InitiateCheckout (order form
+// submitted) — sent alongside the matching client-side fbq() call in
+// metaPixel.ts so both dedupe into one event via the shared eventId. Fired
+// without awaiting by callers; failures are swallowed by the endpoint
+// itself, never surfaced to the shopper.
+export async function sendStorefrontPixelEvent(
+  storeSlug: string,
+  input: {
+    eventName: 'AddToCart' | 'ViewContent' | 'InitiateCheckout';
+    eventId: string;
+    contentIds: string[];
+    value: number;
+    numItems: number;
+    customerPhone?: string;
+  },
+): Promise<void> {
+  try {
+    await fetch(`/api/v1/storefront/${storeSlug}/pixel-events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    /* best-effort — a dropped tracking call should never surface to the shopper */
+  }
+}
+
 export interface StorefrontOrderPayload {
   productId: string;
   variantIndex?: number | null;

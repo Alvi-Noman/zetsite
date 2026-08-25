@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { fetchStoreSlugByHost, fetchStorefrontPixelSettings } from '@zetsite/theme-kit';
+import { fetchStoreSlugByHost, fetchStorefrontPixelSettings, initMetaPixel, trackPixelPageView } from '@zetsite/theme-kit';
 import { resolveStoreSlug } from './lib/resolveSlug';
-import { initMetaPixel, trackPixelPageView } from './lib/metaPixel';
 import { HomePage } from './pages/HomePage';
 import { ProductPage } from './pages/ProductPage';
 import { CollectionPage } from './pages/CollectionPage';

@@ -9,7 +9,7 @@ import { LANDING_PAGE_THEME_IDS, DEFAULT_LANDING_PAGE_THEME_ID } from '@zetsite/
 import { getCheckoutSettings } from './checkoutSettingsRoutes.js';
 import { getShippingSettings, type ShippingOption } from './shippingSettingsRoutes.js';
 import { getPixelSettings } from './pixelSettingsRoutes.js';
-import { sendPurchaseCapiEvent } from '../utils/metaCapi.js';
+import { sendCapiEvent } from '../utils/metaCapi.js';
 
 const router: RouterType = Router({ mergeParams: true });
 
@@ -37,6 +37,17 @@ const orderLimiter = rateLimit({
 const abandonedCheckoutLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ViewContent fires once per product view and InitiateCheckout once per
+// submit attempt, so real traffic stays well under this — sized close to
+// storefrontLimiter's general page-view budget rather than orderLimiter's
+// tight one, since these carry no fraud/spam cost the way order creation does.
+const pixelEventLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -376,7 +387,8 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
     // hiccup never delays or fails order placement.
     getPixelSettings(storeId)
       .then((pixelSettings) =>
-        sendPurchaseCapiEvent(pixelSettings, req, {
+        sendCapiEvent(pixelSettings, req, {
+          eventName: 'Purchase',
           eventId: result.insertedId.toString(),
           // The storefront serves one currency (Taka) across every store —
           // see checkoutSettingsRoutes.ts's `currency` field, which is a
@@ -724,6 +736,60 @@ router.get('/:slug/pixel-settings', async (req: StoreScopedRequest, res) => {
   const storeId = new ObjectId(req.store!.id);
   const settings = await getPixelSettings(storeId);
   res.json({ success: true, pixel: { enabled: settings.enabled, pixelId: settings.pixelId } });
+});
+
+const PIXEL_EVENT_NAMES = new Set(['AddToCart', 'ViewContent', 'InitiateCheckout']);
+const MAX_PIXEL_EVENT_TEXT_LEN = 200;
+
+// CAPI leg of AddToCart (order-now CTA clicked), ViewContent (product page
+// view), and InitiateCheckout (order form's first keystroke), fired
+// alongside the matching client-side fbq() call (metaPixel.ts) with a shared
+// eventId for Meta's deduplication. Purchase is deliberately excluded here —
+// it's only ever fired server-side from inside POST /:slug/orders, right
+// after an order actually persists, so a client can't forge a fake sale
+// event by hitting this endpoint directly.
+router.post('/:slug/pixel-events', pixelEventLimiter, async (req: StoreScopedRequest, res) => {
+  const { eventName, eventId, contentIds, value, numItems, customerPhone } = req.body ?? {};
+
+  if (typeof eventName !== 'string' || !PIXEL_EVENT_NAMES.has(eventName)) {
+    res.status(400).json({ success: false, message: 'Invalid eventName' });
+    return;
+  }
+  if (typeof eventId !== 'string' || !eventId.trim()) {
+    res.status(400).json({ success: false, message: 'Invalid eventId' });
+    return;
+  }
+  if (!Array.isArray(contentIds) || contentIds.length === 0 || !contentIds.every((id) => typeof id === 'string' && ObjectId.isValid(id))) {
+    res.status(400).json({ success: false, message: 'Invalid contentIds' });
+    return;
+  }
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0 || numericValue > 10_000_000) {
+    res.status(400).json({ success: false, message: 'Invalid value' });
+    return;
+  }
+  const numericItems = Number(numItems);
+  if (!Number.isInteger(numericItems) || numericItems < 1 || numericItems > MAX_QUANTITY) {
+    res.status(400).json({ success: false, message: 'Invalid numItems' });
+    return;
+  }
+
+  const storeId = new ObjectId(req.store!.id);
+  const pixelSettings = await getPixelSettings(storeId);
+  sendCapiEvent(pixelSettings, req, {
+    eventName: eventName as 'AddToCart' | 'ViewContent' | 'InitiateCheckout',
+    eventId: eventId.trim().slice(0, MAX_PIXEL_EVENT_TEXT_LEN),
+    eventSourceUrl: req.headers.referer ?? `https://${req.hostname}`,
+    value: numericValue,
+    currency: 'BDT',
+    contentIds: contentIds.slice(0, 10),
+    numItems: numericItems,
+    customerPhone: typeof customerPhone === 'string' ? customerPhone.slice(0, MAX_PIXEL_EVENT_TEXT_LEN) : undefined,
+  }).catch((err) => console.error('[metaCapi] failed to dispatch pixel event:', err));
+
+  // Fire-and-forget from the client's perspective too — respond immediately
+  // rather than waiting on the Graph API call above.
+  res.status(202).json({ success: true });
 });
 
 router.get('/:slug/products', async (req: StoreScopedRequest, res) => {

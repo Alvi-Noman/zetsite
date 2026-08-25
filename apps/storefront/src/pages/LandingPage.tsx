@@ -1,9 +1,78 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { renderSections } from '@zetsite/theme-kit';
+import {
+  renderSections,
+  fetchStorefrontProduct,
+  sendStorefrontPixelEvent,
+  trackPixelAddToCart,
+  createIdempotencyKey,
+  type StorefrontProduct,
+} from '@zetsite/theme-kit';
 import { LANDING_PAGE_THEME_RENDERERS } from '@zetsite/shared/landingThemes';
 import { fetchLandingPage, fetchLandingPagePreview, trackLandingPageEvent, type PublishedLandingPage } from '../lib/api';
 import { useThemeById } from '../hooks/useThemeById';
+
+// Meta's pixel/CAPI value+currency fields want an ISO 4217 code, not a
+// display symbol — this storefront only ever prices in Taka today.
+const PIXEL_CURRENCY = 'BDT';
+
+// Single-page landing funnels have no literal cart, so AddToCart fires on
+// the "Order now"/"Buy now" CTA click that scrolls the shopper down to the
+// order form — every landing theme's buy buttons link to "#order" (see
+// OrderForm.tsx's `<section id="order">` across every theme package). This
+// is the industry-standard substitute for a real add-to-cart action in
+// single-page funnels.
+function useAddToCartOnOrderCta(storeSlug: string, page: PublishedLandingPage | null | undefined) {
+  const firedRef = useRef(false);
+  const productRef = useRef<StorefrontProduct | null>(null);
+  const pendingClickRef = useRef(false);
+
+  function fireAddToCart() {
+    const product = productRef.current;
+    if (firedRef.current || !product) return;
+    firedRef.current = true;
+    const eventId = createIdempotencyKey();
+    const value = product.price ?? 0;
+    trackPixelAddToCart(eventId, product.id, value, PIXEL_CURRENCY);
+    sendStorefrontPixelEvent(storeSlug, {
+      eventName: 'AddToCart',
+      eventId,
+      contentIds: [product.id],
+      value,
+      numItems: 1,
+    });
+  }
+
+  useEffect(() => {
+    if (!page) return;
+    const orderSection = page.sections.find((s) => s.type === 'orderForm');
+    const productId = orderSection?.settings?.productId;
+    if (typeof productId !== 'string' || !productId) return;
+    let cancelled = false;
+    fetchStorefrontProduct(storeSlug, productId).then((p) => {
+      if (cancelled || !p) return;
+      productRef.current = p;
+      // A shopper who clicked the CTA before the product finished loading
+      // still gets counted once it resolves, instead of the click being lost.
+      if (pendingClickRef.current) fireAddToCart();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeSlug, page]);
+
+  useEffect(() => {
+    if (!page) return;
+    function handleClick(e: MouseEvent) {
+      const anchor = (e.target as HTMLElement)?.closest('a');
+      if (!anchor?.getAttribute('href')?.includes('#order')) return;
+      pendingClickRef.current = true;
+      fireAddToCart();
+    }
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [page]);
+}
 
 function applyContentOverrides(page: PublishedLandingPage): PublishedLandingPage {
   const params = new URLSearchParams(window.location.search);
@@ -127,6 +196,7 @@ export function LandingPage({ storeSlug }: { storeSlug: string }) {
   const [passwordError, setPasswordError] = useState(false);
   const tracked = useRef(false);
   const theme = useThemeById(page ? LANDING_PAGE_THEME_RENDERERS[page.themeId] : undefined);
+  useAddToCartOnOrderCta(storeSlug, page);
 
   async function load(password?: string) {
     if (!handle) return;

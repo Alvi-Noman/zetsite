@@ -35,7 +35,10 @@ function clientIp(req: Request): string | undefined {
   return first?.trim() || req.ip;
 }
 
-export interface CapiPurchaseInput {
+export type CapiEventName = 'AddToCart' | 'ViewContent' | 'InitiateCheckout' | 'Purchase';
+
+export interface CapiEventInput {
+  eventName: CapiEventName;
   eventId: string;
   eventSourceUrl: string;
   value: number;
@@ -46,10 +49,10 @@ export interface CapiPurchaseInput {
   customerEmail?: string;
 }
 
-// Fire-and-forget: purchase confirmation should never fail or slow down on a
-// Meta API hiccup, so callers should not await this on the request's
-// critical path (log-and-continue instead).
-export async function sendPurchaseCapiEvent(settings: PixelSettings, req: Request, input: CapiPurchaseInput): Promise<void> {
+// Fire-and-forget: tracking should never fail or slow down the request it's
+// attached to, so callers should not await this on the critical path
+// (log-and-continue instead).
+export async function sendCapiEvent(settings: PixelSettings, req: Request, input: CapiEventInput): Promise<void> {
   if (!settings.enabled || !settings.pixelId || !settings.capiAccessToken) return;
 
   const userData: Record<string, unknown> = {
@@ -72,7 +75,7 @@ export async function sendPurchaseCapiEvent(settings: PixelSettings, req: Reques
   const body = {
     data: [
       {
-        event_name: 'Purchase',
+        event_name: input.eventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: input.eventId,
         event_source_url: input.eventSourceUrl,
@@ -100,9 +103,9 @@ export async function sendPurchaseCapiEvent(settings: PixelSettings, req: Reques
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      console.error(`[metaCapi] Purchase event rejected (${res.status}): ${text}`);
+      console.error(`[metaCapi] ${input.eventName} event rejected (${res.status}): ${text}`);
     }
   } catch (err) {
-    console.error('[metaCapi] Purchase event request failed:', err);
+    console.error(`[metaCapi] ${input.eventName} event request failed:`, err);
   }
 }

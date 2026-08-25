@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchStorefrontOrder, type StorefrontOrderConfirmation, type CheckoutSettings } from '@zetsite/theme-kit';
-import { trackPixelPurchase } from '../lib/metaPixel';
+import {
+  fetchStorefrontOrder,
+  trackPixelPurchase,
+  type StorefrontOrderConfirmation,
+  type CheckoutSettings,
+} from '@zetsite/theme-kit';
 
 function money(currency: string, value: number): string {
   return `${currency || '৳'}${value.toFixed(2)}`;

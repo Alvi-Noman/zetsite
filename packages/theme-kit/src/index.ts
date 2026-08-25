@@ -11,3 +11,4 @@ export * from './video.js';
 export * from './icons.js';
 export * from './ProductOrderPanel.js';
 export * from './useAbandonedCheckoutDraft.js';
+export * from './metaPixel.js';

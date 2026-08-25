@@ -3,6 +3,7 @@ import {
   fetchStorefrontCheckoutSettings,
   fetchStorefrontShippingSettings,
   submitStorefrontOrder,
+  sendStorefrontPixelEvent,
   createIdempotencyKey,
   type StorefrontProduct,
   type StorefrontVariant,
@@ -10,6 +11,12 @@ import {
   type ShippingSettings,
 } from './api.js';
 import { useAbandonedCheckoutDraft } from './useAbandonedCheckoutDraft.js';
+import { trackPixelViewContent, trackPixelInitiateCheckout } from './metaPixel.js';
+
+// Meta's pixel/CAPI value+currency fields want an ISO 4217 code, not the
+// display symbol (e.g. "৳") stored in CheckoutSettings.currency — this
+// storefront only ever prices in Taka today.
+const PIXEL_CURRENCY = 'BDT';
 
 function money(currency: string, value: number): string {
   return `${currency || '৳'}${value.toFixed(2)}`;
@@ -48,9 +55,9 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [shippingIndex, setShippingIndex] = useState(0);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [name, setNameState] = useState('');
+  const [phone, setPhoneState] = useState('');
+  const [address, setAddressState] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real shoppers never see or fill this
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -76,6 +83,22 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
     };
   }, [storeSlug]);
 
+  // ViewContent — fired once per product page view, matching the id sent to
+  // the server-side CAPI event below so Meta dedupes the two into one event.
+  useEffect(() => {
+    const eventId = createIdempotencyKey();
+    const value = variant?.price ?? product.price ?? 0;
+    trackPixelViewContent(eventId, product.id, value, PIXEL_CURRENCY);
+    sendStorefrontPixelEvent(storeSlug, {
+      eventName: 'ViewContent',
+      eventId,
+      contentIds: [product.id],
+      value,
+      numItems: 1,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeSlug, product.id]);
+
   const currency = checkout?.currency || '৳';
   const shippingOptions = shippingSettings?.options?.length ? shippingSettings.options : [{ label: 'Inside Dhaka', cost: 0 }];
   const hasVariants = product.variants.length > 0;
@@ -84,6 +107,39 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
   const shipping = shippingOptions[shippingIndex] ?? shippingOptions[0];
   const subtotal = price * quantity;
   const total = subtotal + (shipping?.cost ?? 0);
+
+  // InitiateCheckout — fired the moment the shopper starts filling in the
+  // order form (first keystroke in any of name/phone/address), not on
+  // submit. Someone who fills the form but abandons before submitting is a
+  // valuable retargeting audience that a submit-time-only event would miss
+  // entirely, so this fires as early as real purchase intent shows up.
+  const checkoutStartedRef = useRef(false);
+  function markCheckoutStarted() {
+    if (checkoutStartedRef.current) return;
+    checkoutStartedRef.current = true;
+    const eventId = createIdempotencyKey();
+    trackPixelInitiateCheckout(eventId, product.id, total, PIXEL_CURRENCY, quantity);
+    sendStorefrontPixelEvent(storeSlug, {
+      eventName: 'InitiateCheckout',
+      eventId,
+      contentIds: [product.id],
+      value: total,
+      numItems: quantity,
+      customerPhone: phone,
+    });
+  }
+  function setName(v: string) {
+    markCheckoutStarted();
+    setNameState(v);
+  }
+  function setPhone(v: string) {
+    markCheckoutStarted();
+    setPhoneState(v);
+  }
+  function setAddress(v: string) {
+    markCheckoutStarted();
+    setAddressState(v);
+  }
 
   const { markConverted } = useAbandonedCheckoutDraft(storeSlug, {
     key: idempotencyKeyRef.current,
