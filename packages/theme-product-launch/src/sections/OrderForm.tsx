@@ -5,6 +5,9 @@ import {
   fetchStorefrontCheckoutSettings,
   fetchStorefrontShippingSettings,
   submitStorefrontOrder,
+  sendStorefrontPixelEvent,
+  trackPixelViewContent,
+  trackPixelInitiateCheckout,
   createIdempotencyKey,
   useAbandonedCheckoutDraft,
   type StorefrontProduct,
@@ -12,6 +15,11 @@ import {
   type ShippingSettings,
   ResponsiveImage,
 } from '@zetsite/theme-kit';
+
+// Meta's pixel/CAPI value+currency fields want an ISO 4217 code, not the
+// display symbol (e.g. "৳") CheckoutSettings.currency holds — this
+// storefront only ever prices in Taka today.
+const PIXEL_CURRENCY = 'BDT';
 
 export interface OrderFormSettings {
   productId: string;
@@ -46,9 +54,9 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
   const [quantity, setQuantity] = useState(1);
   const [variantIndex, setVariantIndex] = useState(0);
   const [shippingIndex, setShippingIndex] = useState(0);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [name, setNameState] = useState('');
+  const [phone, setPhoneState] = useState('');
+  const [address, setAddressState] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real shoppers never see or fill this
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -92,6 +100,22 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     };
   }, [storeSlug]);
 
+  // ViewContent — fired once the product resolves, matching the id sent to
+  // the server-side CAPI event so Meta dedupes the two into one event.
+  useEffect(() => {
+    if (!product) return;
+    const eventId = createIdempotencyKey();
+    const value = product.price ?? 0;
+    trackPixelViewContent(eventId, product.id, value, PIXEL_CURRENCY);
+    sendStorefrontPixelEvent(storeSlug, {
+      eventName: 'ViewContent',
+      eventId,
+      contentIds: [product.id],
+      value,
+      numItems: 1,
+    });
+  }, [storeSlug, product?.id]);
+
   const currency = checkout?.currency || '৳';
   const shippingOptions = shippingSettings?.options?.length ? shippingSettings.options : [{ label: 'Inside Dhaka', cost: 0 }];
   const hasVariants = !!product?.variants?.length;
@@ -101,6 +125,39 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
   const shipping = shippingOptions[shippingIndex] ?? shippingOptions[0];
   const subtotal = price * quantity;
   const total = subtotal + (shipping?.cost ?? 0);
+
+  // InitiateCheckout — fired the moment the shopper starts filling in the
+  // order form (first keystroke in any of name/phone/address), not on
+  // submit. Someone who fills the form but abandons before submitting is a
+  // valuable retargeting audience that a submit-time-only event would miss
+  // entirely, so this fires as early as real purchase intent shows up.
+  const checkoutStartedRef = useRef(false);
+  function markCheckoutStarted() {
+    if (checkoutStartedRef.current || !product) return;
+    checkoutStartedRef.current = true;
+    const eventId = createIdempotencyKey();
+    trackPixelInitiateCheckout(eventId, product.id, total, PIXEL_CURRENCY, quantity);
+    sendStorefrontPixelEvent(storeSlug, {
+      eventName: 'InitiateCheckout',
+      eventId,
+      contentIds: [product.id],
+      value: total,
+      numItems: quantity,
+      customerPhone: phone,
+    });
+  }
+  function setName(v: string) {
+    markCheckoutStarted();
+    setNameState(v);
+  }
+  function setPhone(v: string) {
+    markCheckoutStarted();
+    setPhoneState(v);
+  }
+  function setAddress(v: string) {
+    markCheckoutStarted();
+    setAddressState(v);
+  }
 
   const { markConverted } = useAbandonedCheckoutDraft(storeSlug, {
     key: idempotencyKeyRef.current,
