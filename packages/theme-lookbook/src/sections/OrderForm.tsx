@@ -222,7 +222,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     <section id="order" className="mx-auto max-w-5xl px-4 py-12">
       <div className="mb-6">{renderBlocks?.((b) => b.type === 'heading')}</div>
       <div className="grid gap-6 lg:grid-cols-5">
-        <form onSubmit={handleSubmit} className="space-y-4 lg:col-span-3">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4 lg:col-span-3">
           {/* Honeypot: hidden from real shoppers via CSS + tabIndex, only a bot filling every field blindly will populate it. */}
           <input
             type="text"
@@ -351,7 +351,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
           </button>
         </form>
 
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-5">
             <h3 className="mb-4 text-sm font-bold text-neutral-900">Order summary</h3>
             <div className="flex items-center gap-3 border-b border-neutral-200 pb-4">

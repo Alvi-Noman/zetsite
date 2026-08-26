@@ -32,7 +32,7 @@ export function OrderFormSticky({ settings, storeSlug, renderBlocks }: SectionCo
     <section id="order" className="mx-auto max-w-5xl px-4 py-12">
       <div className="mb-6">{renderBlocks?.((b) => b.type === 'heading')}</div>
       <div className="grid gap-6 lg:grid-cols-5">
-        <form onSubmit={f.handleSubmit} className="space-y-4 lg:col-span-3">
+        <form onSubmit={f.handleSubmit} className="min-w-0 space-y-4 lg:col-span-3">
           {f.hasVariants && f.product!.variants.length > 1 ? (
             <div>
               <span className="mb-1.5 block text-xs font-semibold text-neutral-600">Options</span>
@@ -87,7 +87,7 @@ export function OrderFormSticky({ settings, storeSlug, renderBlocks }: SectionCo
           </button>
         </form>
 
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <div className="sticky top-4 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
             <h3 className="mb-4 text-sm font-bold text-neutral-900">Order summary</h3>
             <div className="flex items-center gap-3 border-b border-neutral-200 pb-4">
