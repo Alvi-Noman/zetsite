@@ -70,6 +70,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Shipping and delivery', to: '/settings/shipping' },
       { label: 'Facebook Pixel', to: '/settings/facebook-pixel' },
       { label: 'Domains', to: '/settings/domains' },
+      { label: 'Connected apps', to: '/settings/connected-apps' },
     ],
   },
 ];

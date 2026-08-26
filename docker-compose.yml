@@ -22,6 +22,9 @@ services:
       FRONTEND_URL: ${PUBLIC_APP_URL:-http://localhost:3100}
       SITE_ROOT_DOMAIN: ${SITE_ROOT_DOMAIN:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100,http://127.0.0.1:3100}
+      # ZetSales integration (Settings > Connected apps) — see .env.example for what each does.
+      ZETSALES_REDIRECT_URI: ${ZETSALES_REDIRECT_URI:-}
+      ZETSALES_INTEGRATION_SECRET: ${ZETSALES_INTEGRATION_SECRET:-}
     working_dir: /app/services/auth-service
     ports:
       - "4012:4002"
@@ -46,6 +49,7 @@ services:
       # native builder, just without AI-polished copy.
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1}
+      ZETSITE_WEBHOOK_SECRET: ${ZETSITE_WEBHOOK_SECRET:-}
     working_dir: /app/services/api-service
     ports:
       - "4011:4001"

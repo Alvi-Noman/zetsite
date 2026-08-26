@@ -10,6 +10,7 @@ import { getCheckoutSettings } from './checkoutSettingsRoutes.js';
 import { getShippingSettings, type ShippingOption } from './shippingSettingsRoutes.js';
 import { getPixelSettings } from './pixelSettingsRoutes.js';
 import { sendCapiEvent } from '../utils/metaCapi.js';
+import { dispatchIntegrationWebhook } from '../utils/integrationWebhooks.js';
 
 const router: RouterType = Router({ mergeParams: true });
 
@@ -402,6 +403,19 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
         }),
       )
       .catch((err) => console.error('[metaCapi] failed to dispatch Purchase event:', err));
+    dispatchIntegrationWebhook(storeId, 'orders/create', {
+      id: result.insertedId.toString(),
+      productId: product._id.toString(),
+      variantIndex: resolvedVariantIndex,
+      variantLabel: variant?.label ?? null,
+      quantity: qty,
+      customer: { name: cleanName, phone: cleanPhone, address: cleanAddress },
+      shippingLabel: shippingOption.label,
+      shippingCost: shippingOption.cost,
+      subtotal,
+      total,
+      status: 'new',
+    });
     res.status(201).json({ success: true, orderId: result.insertedId.toString() });
   } catch (err: any) {
     // Duplicate idempotencyKey raced in between the pre-check above and this

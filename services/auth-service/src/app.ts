@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes.js';
 import domainRoutes from './routes/domainRoutes.js';
+import integrationRoutes from './routes/integrationRoutes.js';
 
 const app: Express = express();
 
@@ -22,5 +23,7 @@ app.use('/api/v1/auth', authRoutes);
 // service, everything else under /api/ going to api-service — reaches it
 // without needing its own extra proxy rule.
 app.use('/api/v1/auth/domains', domainRoutes);
+// Same nginx-proxy constraint as domainRoutes above.
+app.use('/api/v1/auth/integrations', integrationRoutes);
 
 export default app;

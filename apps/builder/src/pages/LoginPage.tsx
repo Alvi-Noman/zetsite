@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button, Input } from '@/components/ui';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +18,8 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate('/home');
+      const returnTo = searchParams.get('returnTo');
+      navigate(returnTo && returnTo.startsWith('/') ? returnTo : '/home');
     } catch (err: any) {
       setError(err?.response?.data?.message ?? 'Login failed');
     } finally {

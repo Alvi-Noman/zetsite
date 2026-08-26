@@ -2,6 +2,7 @@ import { Router, type Router as RouterType } from 'express';
 import { ObjectId } from 'mongodb';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/authMiddleware.js';
 import { getDb } from '../utils/db.js';
+import { dispatchIntegrationWebhook } from '../utils/integrationWebhooks.js';
 
 const router: RouterType = Router();
 
@@ -72,6 +73,7 @@ router.put('/:id/status', requireAuth, async (req: AuthenticatedRequest, res) =>
     return;
   }
 
+  dispatchIntegrationWebhook(storeId, 'orders/updated', { id: req.params.id, status });
   res.json({ success: true });
 });
 

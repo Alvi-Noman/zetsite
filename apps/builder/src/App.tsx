@@ -15,9 +15,11 @@ import CheckoutSettingsPage from '@/pages/settings/CheckoutSettingsPage';
 import ShippingSettingsPage from '@/pages/settings/ShippingSettingsPage';
 import FacebookPixelSettingsPage from '@/pages/settings/FacebookPixelSettingsPage';
 import DomainsPage from '@/pages/settings/DomainsPage';
+import ConnectedAppsPage from '@/pages/settings/ConnectedAppsPage';
 import OrdersPage from '@/pages/storefront/OrdersPage';
 import AbandonedCheckoutsPage from '@/pages/storefront/AbandonedCheckoutsPage';
 import ContentEditorPage from '@/pages/content/ContentEditorPage';
+import AuthorizePage from '@/pages/oauth/AuthorizePage';
 
 export default function App() {
   return (
@@ -35,6 +37,18 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ContentEditorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* OAuth consent screen a third-party app (zetsales) redirects the
+            merchant's browser to — its own full-screen layout, not the admin
+            chrome, matching Shopify's own app-install consent screens. */}
+        <Route
+          path="/oauth/authorize"
+          element={
+            <ProtectedRoute>
+              <AuthorizePage />
             </ProtectedRoute>
           }
         />
@@ -67,6 +81,7 @@ export default function App() {
           <Route path="/settings/shipping" element={<ShippingSettingsPage />} />
           <Route path="/settings/facebook-pixel" element={<FacebookPixelSettingsPage />} />
           <Route path="/settings/domains" element={<DomainsPage />} />
+          <Route path="/settings/connected-apps" element={<ConnectedAppsPage />} />
         </Route>
       </Routes>
     </AuthProvider>

@@ -3,161 +3,10 @@ import { ObjectId } from 'mongodb';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/authMiddleware.js';
 import { getDb } from '../utils/db.js';
 import { createUniqueHandle } from '../utils/slugify.js';
+import { buildProductFields, serializeProduct } from '../services/productService.js';
+import { dispatchIntegrationWebhook } from '../utils/integrationWebhooks.js';
 
 const router: RouterType = Router();
-
-interface ProductOption {
-  name: string;
-  values: string[];
-}
-
-interface Variant {
-  label: string;
-  values: string[];
-  price?: number;
-  sku?: string;
-  available: number;
-  image?: string | null;
-}
-
-interface MediaVariants {
-  thumbnail?: string;
-  medium?: string;
-  large?: string;
-  original?: string;
-  placeholder?: string;
-  avif?: {
-    thumbnail?: string;
-    medium?: string;
-    large?: string;
-  };
-}
-
-interface Media {
-  url: string;
-  type: string;
-  name?: string;
-  variants?: MediaVariants;
-}
-
-function serializeProduct(product: any) {
-  return {
-    id: product._id.toString(),
-    title: product.title,
-    handle: product.handle ?? '',
-    description: product.description ?? '',
-    media: product.media ?? [],
-    category: product.category ?? '',
-    price: product.price,
-    compareAtPrice: product.compareAtPrice,
-    sku: product.sku ?? '',
-    options: product.options ?? [],
-    variants: product.variants ?? [],
-    collections: product.collections ?? [],
-    createdAt: product.createdAt,
-    updatedAt: product.updatedAt,
-  };
-}
-
-function buildProductFields(body: any) {
-  const { title, description, media, category, price, compareAtPrice, sku, options, variants, collections } = body;
-
-  if (!title || typeof title !== 'string' || !title.trim()) {
-    throw new Error('Title is required');
-  }
-
-  const numericPrice = Number(price);
-  if (price !== undefined && price !== null && price !== '' && Number.isNaN(numericPrice)) {
-    throw new Error('Price must be a number');
-  }
-
-  const numericCompareAtPrice = Number(compareAtPrice);
-  if (compareAtPrice !== undefined && compareAtPrice !== null && compareAtPrice !== '' && Number.isNaN(numericCompareAtPrice)) {
-    throw new Error('Compare at price must be a number');
-  }
-
-  const cleanMedia: Media[] = Array.isArray(media)
-    ? media
-        .filter((m) => m && typeof m.url === 'string')
-        .map((m) => ({
-          url: m.url,
-          type: typeof m.type === 'string' ? m.type : 'image',
-          name: typeof m.name === 'string' ? m.name : undefined,
-          variants:
-            m.variants && typeof m.variants === 'object'
-              ? {
-                  thumbnail: typeof m.variants.thumbnail === 'string' ? m.variants.thumbnail : undefined,
-                  medium: typeof m.variants.medium === 'string' ? m.variants.medium : undefined,
-                  large: typeof m.variants.large === 'string' ? m.variants.large : undefined,
-                  original: typeof m.variants.original === 'string' ? m.variants.original : undefined,
-                  placeholder: typeof m.variants.placeholder === 'string' ? m.variants.placeholder : undefined,
-                  avif:
-                    m.variants.avif && typeof m.variants.avif === 'object'
-                      ? {
-                          thumbnail:
-                            typeof m.variants.avif.thumbnail === 'string'
-                              ? m.variants.avif.thumbnail
-                              : undefined,
-                          medium:
-                            typeof m.variants.avif.medium === 'string' ? m.variants.avif.medium : undefined,
-                          large:
-                            typeof m.variants.avif.large === 'string' ? m.variants.avif.large : undefined,
-                        }
-                      : undefined,
-                }
-              : undefined,
-        }))
-    : [];
-
-  const cleanOptions: ProductOption[] = Array.isArray(options)
-    ? options
-        .filter(
-          (o) =>
-            o &&
-            typeof o.name === 'string' &&
-            o.name.trim() &&
-            Array.isArray(o.values) &&
-            o.values.some((v: any) => typeof v === 'string' && v.trim()),
-        )
-        .map((o) => ({
-          name: o.name.trim(),
-          values: o.values
-            .filter((v: any) => typeof v === 'string' && v.trim())
-            .map((v: string) => v.trim()),
-        }))
-    : [];
-
-  const cleanVariants: Variant[] = Array.isArray(variants)
-    ? variants
-        .filter((v) => v && typeof v.label === 'string' && Array.isArray(v.values))
-        .map((v) => ({
-          label: v.label,
-          values: v.values.filter((x: any) => typeof x === 'string'),
-          price: v.price !== undefined && v.price !== '' ? Number(v.price) : undefined,
-          sku: typeof v.sku === 'string' ? v.sku : undefined,
-          available: v.available !== undefined && v.available !== '' ? Number(v.available) || 0 : 0,
-          image: typeof v.image === 'string' ? v.image : null,
-        }))
-    : [];
-
-  const cleanCollections: string[] = Array.isArray(collections)
-    ? Array.from(new Set(collections.filter((c) => typeof c === 'string' && ObjectId.isValid(c))))
-    : [];
-
-  return {
-    title: title.trim(),
-    description: typeof description === 'string' ? description : '',
-    media: cleanMedia,
-    category: typeof category === 'string' ? category : '',
-    price: price !== undefined && price !== null && price !== '' ? numericPrice : undefined,
-    compareAtPrice:
-      compareAtPrice !== undefined && compareAtPrice !== null && compareAtPrice !== '' ? numericCompareAtPrice : undefined,
-    sku: typeof sku === 'string' ? sku : '',
-    options: cleanOptions,
-    variants: cleanVariants,
-    collections: cleanCollections,
-  };
-}
 
 router.get('/', requireAuth, async (req: AuthenticatedRequest, res) => {
   const db = getDb();
@@ -208,7 +57,9 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res) => {
     });
 
     const product = await db.collection('products').findOne({ _id: result.insertedId });
-    res.status(201).json({ success: true, product: serializeProduct(product) });
+    const serialized = serializeProduct(product);
+    dispatchIntegrationWebhook(storeId, 'products/create', serialized);
+    res.status(201).json({ success: true, product: serialized });
   } catch (error) {
     res.status(400).json({ success: false, message: (error as Error).message });
   }
@@ -219,8 +70,9 @@ router.patch('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
     const fields = buildProductFields(req.body);
 
     const db = getDb();
+    const storeId = new ObjectId(req.user!.storeId);
     const result = await db.collection('products').findOneAndUpdate(
-      { _id: new ObjectId(req.params.id), storeId: new ObjectId(req.user!.storeId) },
+      { _id: new ObjectId(req.params.id), storeId },
       { $set: { ...fields, updatedAt: new Date() } },
       { returnDocument: 'after' },
     );
@@ -230,7 +82,9 @@ router.patch('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
       return;
     }
 
-    res.json({ success: true, product: serializeProduct(result) });
+    const serialized = serializeProduct(result);
+    dispatchIntegrationWebhook(storeId, 'products/update', serialized);
+    res.json({ success: true, product: serialized });
   } catch (error) {
     res.status(400).json({ success: false, message: (error as Error).message });
   }
@@ -238,11 +92,12 @@ router.patch('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
 
 router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
   const db = getDb();
+  const storeId = new ObjectId(req.user!.storeId);
   let result;
   try {
     result = await db.collection('products').deleteOne({
       _id: new ObjectId(req.params.id),
-      storeId: new ObjectId(req.user!.storeId),
+      storeId,
     });
   } catch {
     res.status(400).json({ success: false, message: 'Invalid product id' });
@@ -254,6 +109,7 @@ router.delete('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
     return;
   }
 
+  dispatchIntegrationWebhook(storeId, 'products/delete', { id: req.params.id });
   res.json({ success: true });
 });
 
