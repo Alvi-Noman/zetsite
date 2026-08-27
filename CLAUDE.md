@@ -51,3 +51,11 @@ In short:
   [`docs/image-storage-cdn.md`](docs/image-storage-cdn.md) before doing
   that migration or touching `services/api-service/src/routes/uploadRoutes.ts`'s
   storage layer.
+- Production deploy: zetsite shares one VPS and one Caddy instance with a
+  separate product (zetsales) — see
+  [`infra/edge-ask-gateway/README.md`](infra/edge-ask-gateway/README.md)
+  before touching custom domains, `on_demand_tls`, or anything cert/TLS
+  related. That gateway is what makes merchant custom domains (Settings >
+  Domains) actually get a certificate in production; it isn't part of this
+  repo's own `docker-compose.yml` or deploy workflow, so it's easy to forget
+  it exists.

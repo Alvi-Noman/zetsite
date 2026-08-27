@@ -1,0 +1,17 @@
+services:
+  edge-ask-gateway:
+    image: node:20-alpine
+    container_name: edge-ask-gateway
+    working_dir: /app
+    volumes:
+      - ./server.js:/app/server.js:ro
+    command: node server.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - edge
+    restart: unless-stopped
+
+networks:
+  edge:
+    external: true
