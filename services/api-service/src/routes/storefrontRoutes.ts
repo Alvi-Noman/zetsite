@@ -358,6 +358,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
   }
 
   try {
+    const orderCreatedAt = new Date();
     const result = await db.collection('orders').insertOne({
       storeId,
       landingPageId: resolvedLandingPageId,
@@ -372,7 +373,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
       total,
       status: 'new',
       idempotencyKey: cleanIdempotencyKey,
-      createdAt: new Date(),
+      createdAt: orderCreatedAt,
     });
     // The client reuses its order idempotency key as the abandoned-checkout
     // draft key, so a successful order here means the draft converted —
@@ -415,6 +416,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
       subtotal,
       total,
       status: 'new',
+      createdAt: orderCreatedAt.toISOString(),
     });
     res.status(201).json({ success: true, orderId: result.insertedId.toString() });
   } catch (err: any) {
