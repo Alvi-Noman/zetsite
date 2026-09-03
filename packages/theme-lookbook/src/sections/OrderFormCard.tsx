@@ -51,7 +51,9 @@ export function OrderFormCard({ settings, storeSlug, renderBlocks }: SectionComp
             <form onSubmit={f.handleSubmit} className="space-y-3">
               <input required placeholder="Full name" value={f.name} onChange={(e) => f.setName(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
               <input required type="tel" placeholder="Phone number" value={f.phone} onChange={(e) => f.setPhone(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
-              <input type="email" placeholder="Email (optional)" value={f.email} onChange={(e) => f.setEmail(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
+              {f.checkout?.collectEmail ? (
+                <input type="email" placeholder="Email (optional)" value={f.email} onChange={(e) => f.setEmail(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
+              ) : null}
               <textarea required rows={2} placeholder="Delivery address" value={f.address} onChange={(e) => f.setAddress(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
               <div className="flex gap-2">
                 {f.shippingOptions.map((opt, i) => (

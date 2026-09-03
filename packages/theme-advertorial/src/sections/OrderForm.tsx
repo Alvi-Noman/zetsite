@@ -3,6 +3,7 @@ import type { SectionComponentProps, SectionSchema } from '@zetsite/theme-kit';
 import {
   fetchStorefrontProduct,
   fetchStorefrontShippingSettings,
+  fetchStorefrontCheckoutSettings,
   submitStorefrontOrder,
   sendStorefrontPixelEvent,
   trackPixelViewContent,
@@ -13,6 +14,7 @@ import {
   ResponsiveImage,
   type StorefrontProduct,
   type ShippingSettings,
+  type CheckoutSettings,
 } from '@zetsite/theme-kit';
 
 // Meta's pixel/CAPI value+currency fields want an ISO 4217 code, not the
@@ -59,6 +61,7 @@ function money(currency: string, value: number): string {
 
 export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponentProps<OrderFormSettings>) {
   const [product, setProduct] = useState<StorefrontProduct | null>(null);
+  const [checkout, setCheckout] = useState<CheckoutSettings | null>(null);
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [variantIndex, setVariantIndex] = useState(0);
@@ -95,6 +98,16 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     let cancelled = false;
     fetchStorefrontShippingSettings(storeSlug).then((s) => {
       if (!cancelled) setShippingSettings(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeSlug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchStorefrontCheckoutSettings(storeSlug).then((c) => {
+      if (!cancelled) setCheckout(c);
     });
     return () => {
       cancelled = true;
@@ -280,15 +293,17 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
               className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
             />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-neutral-600">Email (optional)</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
-            />
-          </label>
+          {checkout?.collectEmail ? (
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-neutral-600">Email (optional)</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
+              />
+            </label>
+          ) : null}
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-neutral-600">Delivery address</span>
             <textarea

@@ -18,6 +18,10 @@ export interface CheckoutSettings {
   codLabel: string;
   submitButtonText: string;
   successMessage: string;
+  // Whether the order form asks shoppers for an (always-optional) email
+  // address. Merchant-controlled — off by default so nothing changes for
+  // stores that never opt in.
+  collectEmail: boolean;
 }
 
 export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
@@ -25,6 +29,7 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   codLabel: 'Cash on delivery',
   submitButtonText: 'Place order',
   successMessage: "Order received — we'll be in touch to confirm.",
+  collectEmail: false,
 };
 
 export async function getCheckoutSettings(storeId: ObjectId): Promise<CheckoutSettings> {
@@ -38,6 +43,7 @@ export async function getCheckoutSettings(storeId: ObjectId): Promise<CheckoutSe
       typeof doc.submitButtonText === 'string' && doc.submitButtonText ? doc.submitButtonText : DEFAULT_CHECKOUT_SETTINGS.submitButtonText,
     successMessage:
       typeof doc.successMessage === 'string' && doc.successMessage ? doc.successMessage : DEFAULT_CHECKOUT_SETTINGS.successMessage,
+    collectEmail: typeof doc.collectEmail === 'boolean' ? doc.collectEmail : DEFAULT_CHECKOUT_SETTINGS.collectEmail,
   };
 }
 
@@ -62,6 +68,7 @@ router.put('/', requireAuth, async (req: AuthenticatedRequest, res) => {
       typeof body.successMessage === 'string'
         ? body.successMessage.trim().slice(0, 300) || DEFAULT_CHECKOUT_SETTINGS.successMessage
         : DEFAULT_CHECKOUT_SETTINGS.successMessage,
+    collectEmail: typeof body.collectEmail === 'boolean' ? body.collectEmail : DEFAULT_CHECKOUT_SETTINGS.collectEmail,
   };
 
   const db = getDb();

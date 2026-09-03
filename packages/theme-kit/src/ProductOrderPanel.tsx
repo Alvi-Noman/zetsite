@@ -225,13 +225,15 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
           className={`w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none ${classNames.accentFocus}`}
         />
       </div>
-      <input
-        type="email"
-        placeholder="Email (optional)"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className={`w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none ${classNames.accentFocus}`}
-      />
+      {checkout?.collectEmail ? (
+        <input
+          type="email"
+          placeholder="Email (optional)"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={`w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none ${classNames.accentFocus}`}
+        />
+      ) : null}
       <textarea
         required
         rows={2}

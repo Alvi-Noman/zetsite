@@ -7,6 +7,7 @@ interface CheckoutSettings {
   codLabel: string;
   submitButtonText: string;
   successMessage: string;
+  collectEmail: boolean;
 }
 
 const DEFAULT_SETTINGS: CheckoutSettings = {
@@ -14,6 +15,7 @@ const DEFAULT_SETTINGS: CheckoutSettings = {
   codLabel: 'Cash on delivery',
   submitButtonText: 'Place order',
   successMessage: "Order received — we'll be in touch to confirm.",
+  collectEmail: false,
 };
 
 export default function CheckoutSettingsPage() {
@@ -89,6 +91,15 @@ export default function CheckoutSettingsPage() {
               onChange={(e) => setSettings((s) => ({ ...s, successMessage: e.target.value }))}
             />
           </div>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={settings.collectEmail}
+              onChange={(e) => setSettings((s) => ({ ...s, collectEmail: e.target.checked }))}
+              className="rounded border-border"
+            />
+            Ask for an email address (always optional for the shopper)
+          </label>
         </div>
       </Card>
 

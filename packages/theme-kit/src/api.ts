@@ -135,6 +135,9 @@ export interface CheckoutSettings {
   codLabel: string;
   submitButtonText: string;
   successMessage: string;
+  // Merchant-controlled — whether the order form asks for an (always
+  // optional) email address at all.
+  collectEmail: boolean;
 }
 
 const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
@@ -142,6 +145,7 @@ const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   codLabel: 'Cash on delivery',
   submitButtonText: 'Place order',
   successMessage: "Order received — we'll be in touch to confirm.",
+  collectEmail: false,
 };
 
 export async function fetchStorefrontCheckoutSettings(storeSlug: string): Promise<CheckoutSettings> {

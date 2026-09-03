@@ -59,10 +59,12 @@ export function OrderFormSticky({ settings, storeSlug, renderBlocks }: SectionCo
             <span className="mb-1 block text-xs font-semibold text-neutral-600">Phone number</span>
             <input required type="tel" value={f.phone} onChange={(e) => f.setPhone(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-neutral-600">Email (optional)</span>
-            <input type="email" value={f.email} onChange={(e) => f.setEmail(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
-          </label>
+          {f.checkout?.collectEmail ? (
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-neutral-600">Email (optional)</span>
+              <input type="email" value={f.email} onChange={(e) => f.setEmail(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
+            </label>
+          ) : null}
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-neutral-600">Delivery address</span>
             <textarea required rows={3} value={f.address} onChange={(e) => f.setAddress(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
