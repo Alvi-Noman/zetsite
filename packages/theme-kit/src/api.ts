@@ -236,6 +236,8 @@ export interface StorefrontOrderPayload {
   name: string;
   phone: string;
   address: string;
+  // Optional — unlike name/phone/address, never required to place an order.
+  email?: string;
   shippingLabel: string;
   shippingCost: number;
   // Stable per-submission key so a retried request (double-click, browser
@@ -276,7 +278,7 @@ export interface StorefrontOrderConfirmation {
   product: { title: string; handle: string; image: string | null };
   variantLabel: string | null;
   quantity: number;
-  customer: { name: string; phone: string; address: string };
+  customer: { name: string; phone: string; address: string; email: string | null };
   shippingLabel: string;
   shippingCost: number;
   subtotal: number;

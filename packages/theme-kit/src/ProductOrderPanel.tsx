@@ -57,6 +57,7 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
   const [shippingIndex, setShippingIndex] = useState(0);
   const [name, setNameState] = useState('');
   const [phone, setPhoneState] = useState('');
+  const [email, setEmail] = useState('');
   const [address, setAddressState] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real shoppers never see or fill this
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle');
@@ -168,6 +169,7 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
       quantity,
       name,
       phone,
+      email,
       address,
       shippingLabel: shipping?.label ?? '',
       shippingCost: shipping?.cost ?? 0,
@@ -223,6 +225,13 @@ export function ProductOrderPanel({ storeSlug, product, variant, variantIndex, c
           className={`w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none ${classNames.accentFocus}`}
         />
       </div>
+      <input
+        type="email"
+        placeholder="Email (optional)"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={`w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:outline-none ${classNames.accentFocus}`}
+      />
       <textarea
         required
         rows={2}

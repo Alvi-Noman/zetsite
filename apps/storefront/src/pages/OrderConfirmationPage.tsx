@@ -154,6 +154,7 @@ export function OrderConfirmationPage({ storeSlug }: { storeSlug: string }) {
           <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-500">Delivery details</h3>
           <p className="mt-2 text-sm font-semibold text-neutral-900">{order.customer.name}</p>
           <p className="text-sm text-neutral-600">{order.customer.phone}</p>
+          {order.customer.email ? <p className="text-sm text-neutral-600">{order.customer.email}</p> : null}
           <p className="mt-1 text-sm text-neutral-600">{order.customer.address}</p>
         </div>
         <div className="rounded-lg border border-neutral-200 px-5 py-4">

@@ -66,6 +66,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
   const [shippingIndex, setShippingIndex] = useState(0);
   const [name, setNameState] = useState('');
   const [phone, setPhoneState] = useState('');
+  const [email, setEmailState] = useState('');
   const [address, setAddressState] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real shoppers never see or fill this
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle');
@@ -153,6 +154,10 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
     markCheckoutStarted();
     setPhoneState(v);
   }
+  function setEmail(v: string) {
+    markCheckoutStarted();
+    setEmailState(v);
+  }
   function setAddress(v: string) {
     markCheckoutStarted();
     setAddressState(v);
@@ -190,6 +195,7 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
       quantity,
       name,
       phone,
+      email,
       address,
       shippingLabel: shipping?.label ?? '',
       shippingCost: shipping?.cost ?? 0,
@@ -271,6 +277,15 @@ export function OrderForm({ settings, storeSlug, renderBlocks }: SectionComponen
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-neutral-600">Email (optional)</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
             />
           </label>

@@ -37,6 +37,7 @@ export function useOrderForm(storeSlug: string, productId: string) {
   const [shippingIndex, setShippingIndex] = useState(0);
   const [name, setNameState] = useState('');
   const [phone, setPhoneState] = useState('');
+  const [email, setEmailState] = useState('');
   const [address, setAddressState] = useState('');
   const [website, setWebsite] = useState(''); // honeypot — real shoppers never see or fill this
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle');
@@ -138,6 +139,10 @@ export function useOrderForm(storeSlug: string, productId: string) {
     markCheckoutStarted();
     setPhoneState(v);
   }
+  function setEmail(v: string) {
+    markCheckoutStarted();
+    setEmailState(v);
+  }
   function setAddress(v: string) {
     markCheckoutStarted();
     setAddressState(v);
@@ -175,6 +180,7 @@ export function useOrderForm(storeSlug: string, productId: string) {
       quantity,
       name,
       phone,
+      email,
       address,
       shippingLabel: shipping?.label ?? '',
       shippingCost: shipping?.cost ?? 0,
@@ -208,6 +214,8 @@ export function useOrderForm(storeSlug: string, productId: string) {
     setName,
     phone,
     setPhone,
+    email,
+    setEmail,
     address,
     setAddress,
     website,

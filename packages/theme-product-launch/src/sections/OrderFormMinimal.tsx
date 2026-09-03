@@ -47,6 +47,7 @@ export function OrderFormMinimal({ settings, storeSlug, renderBlocks }: SectionC
         ) : null}
         <input required placeholder="Full name" value={f.name} onChange={(e) => f.setName(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
         <input required type="tel" placeholder="Phone number" value={f.phone} onChange={(e) => f.setPhone(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
+        <input type="email" placeholder="Email (optional)" value={f.email} onChange={(e) => f.setEmail(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
         <textarea required rows={2} placeholder="Delivery address" value={f.address} onChange={(e) => f.setAddress(e.target.value)} className="w-full rounded-md border border-neutral-300 px-3 py-2.5 text-sm focus:border-yellow-600 focus:outline-none" />
 
         <details className="rounded-md border border-neutral-200 px-3 py-2 text-sm">

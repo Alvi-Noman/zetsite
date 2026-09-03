@@ -254,6 +254,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
     name,
     phone,
     address,
+    email,
     shippingLabel,
     idempotencyKey,
     // Honeypot: a hidden field real shoppers never see or fill in. Any bot
@@ -274,6 +275,8 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
   const cleanName = typeof name === 'string' ? name.trim().slice(0, MAX_TEXT_LEN) : '';
   const cleanPhone = typeof phone === 'string' ? phone.trim().slice(0, MAX_TEXT_LEN) : '';
   const cleanAddress = typeof address === 'string' ? address.trim().slice(0, 2000) : '';
+  // Email is optional — unlike name/phone/address it's never required to place an order.
+  const cleanEmail = typeof email === 'string' ? email.trim().slice(0, MAX_TEXT_LEN) : '';
   if (!cleanName || !cleanPhone || !cleanAddress) {
     res.status(400).json({ success: false, message: 'name, phone and address are required' });
     return;
@@ -366,7 +369,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
       variantIndex: resolvedVariantIndex,
       variantLabel: variant?.label ?? null,
       quantity: qty,
-      customer: { name: cleanName, phone: cleanPhone, address: cleanAddress },
+      customer: { name: cleanName, phone: cleanPhone, address: cleanAddress, email: cleanEmail || null },
       shippingLabel: shippingOption.label,
       shippingCost: shippingOption.cost,
       subtotal,
@@ -410,7 +413,7 @@ router.post('/:slug/orders', orderLimiter, async (req: StoreScopedRequest, res) 
       variantIndex: resolvedVariantIndex,
       variantLabel: variant?.label ?? null,
       quantity: qty,
-      customer: { name: cleanName, phone: cleanPhone, address: cleanAddress },
+      customer: { name: cleanName, phone: cleanPhone, address: cleanAddress, email: cleanEmail || null },
       shippingLabel: shippingOption.label,
       shippingCost: shippingOption.cost,
       subtotal,
